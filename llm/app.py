@@ -2,13 +2,14 @@ import streamlit as st
 import requests
 import os
 from dotenv import load_dotenv
-from prompts import system_prompt, context_prompt
+from prompts import system_prompt, filecheck_prompt
 import openai
 import httpx
 
 load_dotenv()
 
-print(os.environ.get("RCHAT_API_KEY") or 'sk-410cd2b0a4b6471cb2504d5a4a49f4fa')
+print(os.environ.get("RCHAT_API_KEY"))
+print(os.environ.get("API_URL"))
 
 test_client = openai.OpenAI(
     base_url=os.environ.get("URL"),
@@ -16,8 +17,13 @@ test_client = openai.OpenAI(
     http_client=httpx.Client(verify=False)
 )
 
+st.markdown("""
+<link rel="stylesheet" href="https://pages.nist.gov/nist-header-footer/css/nist-combined.css">
+      <script src="https://pages.nist.gov/nist-header-footer/js/nist-header-footer-v-2.0.js" type="text/javascript" defer="defer"></script>
+""", unsafe_allow_html=True)
+
 st.set_page_config(page_title="Digitize your EPD with LLMs", layout="wide")
-st.title("Digitize your EPD with LLMs")
+st.title("ParsEPD: Digitize your EPD with LLMs")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -44,46 +50,76 @@ st.sidebar.header("Upload EPD")
 uploaded_file = st.sidebar.file_uploader("Upload your EPD file (PDF)", type=["pdf"])
 
 if uploaded_file:
+    st.session_state.messages = []
     st.sidebar.success(f"Uploaded: {uploaded_file.name}")
     with st.spinner("Extracting markdown..."):
         try:
-            response = requests.post(os.environ.get("API_URL",'http://localhost:8000') + "/upload_pdf/", files={"file": uploaded_file})
+            response = requests.post(os.environ.get("API_URL","http://localhost:8000") + "/upload_pdf/", files={"file": uploaded_file})
             if response.ok:
                 markdown = response.json().get("content", "")
                 st.session_state.context = markdown
-                st.sidebar.success("Markdown extracted successfully. Sending to LLM")
-
-                messages_for_llm = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "system", "content": st.session_state.context}
-                    ] + [
-                        {"role": m["role"], "content": m["content"]} for m in st.session_state.messages if m["role"] in {"user", "assistant"}
-                    ]
-                
-                st.session_state.messages.insert(0, {
-                    "role": "system",
-                    "content": f"✅ **PDF content extracted and used as context:**\n\n```\n{markdown[:3000]}\n```"
-                })
-
-                st.session_state.messages.insert(1, {
-                    "role": "system",
-                    "content": f"{system_prompt}\n"
-                })
-                
-                with st.spinner("Waiting for LLM to process the document..."):
-                    llm_response = ask_rchat(messages_for_llm)
-                    print(f"LLM response: {llm_response}")
-
-                # 💬 Add system context + LLM reply to the chat history
                 st.session_state.messages.append({
                     "role": "system",
-                    "content": "✅ PDF processed. Context has been injected."
-                })
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": llm_response
-                })
+                    "content":"Markdown extracted successfully.Checking if document is an EPD..."})
 
+                # Step 1: Ask LLM if the document is an EPD
+                check_messages = [
+                    {"role": "system", "content": filecheck_prompt},
+                    {"role": "system", "content": markdown}
+                ]
+                with st.spinner("Checking document type..."):
+                    check_reply = ask_rchat(check_messages)
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": f"EPD Validity Check: {check_reply}"
+                    })
+
+                if "VALID EPD" in check_reply:
+                    # st.sidebar.success("Document identified as EPD. Sending to LLM for further processing.")
+
+
+                    messages_for_llm = [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "system", "content": st.session_state.context}
+                        ] + [
+                            {"role": m["role"], "content": m["content"]} for m in st.session_state.messages if m["role"] in {"user", "assistant"}
+                        ]
+                    
+                    st.session_state.messages.insert(0, {
+                        "role": "system",
+                        "content": f"✅ **PDF content extracted and used as context:**```"
+                    })
+
+                    # st.session_state.messages.insert(0, {
+                    #     "role": "system",
+                    #     "content": f"{system_prompt}\n"
+                    # })\
+                    
+                    # st.session_state.messages.insert(1, {
+                    #     "role": "system",
+                    #     "content": f"{filecheck_prompt}\n"
+                    # })
+                    
+                    with st.spinner("Waiting for LLM to process the document..."):
+                        llm_response = ask_rchat(messages_for_llm)
+                        print(f"LLM response: {llm_response}")
+
+                    # 💬 Add system context + LLM reply to the chat history
+                    st.session_state.messages.append({
+                        "role": "system",
+                        "content": "✅ PDF processed. Context has been injected."
+                    })
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": llm_response
+                    })
+                else:
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": "❌ The uploaded document is not identified as an EPD. Please upload a valid EPD PDF."
+                    })
+                    st.sidebar.error("The uploaded document is not identified as an EPD. Please upload a valid EPD PDF.")
+            
                 
             else:
                 st.sidebar.error(f"Error: {response.json().get('error', 'Unknown error')}")
