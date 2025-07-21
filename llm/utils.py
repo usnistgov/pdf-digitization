@@ -56,3 +56,28 @@ def pdf_to_markdown(pdf_path:str,output_md_path: Optional[str] = None)-> str:
         with open(output_md_path, "w", encoding="utf-8") as f:
             f.write(markdown_text)
     return markdown_text
+
+def html_to_markdown(file_path:str,output_path:Optional[str] = None) -> str:
+    """
+    Convert HTML file to Markdown format.
+    
+    Args:
+        file_path (str): Path to the HTML file.
+        output_path (Optional[str]): Path to save the converted Markdown file.
+        
+    Returns:
+        str: Converted Markdown text.
+    """
+    if not os.path.exists(file_path):
+        print(f"File not found: {file_path}")
+        return ""
+    
+    with open(file_path, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    
+    markdown_text = md(html_content, heading_style="ATX")
+    
+    if output_path:
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(markdown_text)
+    return markdown_text

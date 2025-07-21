@@ -17,13 +17,9 @@ test_client = openai.OpenAI(
     http_client=httpx.Client(verify=False)
 )
 
-st.markdown("""
-<link rel="stylesheet" href="https://pages.nist.gov/nist-header-footer/css/nist-combined.css">
-      <script src="https://pages.nist.gov/nist-header-footer/js/nist-header-footer-v-2.0.js" type="text/javascript" defer="defer"></script>
-""", unsafe_allow_html=True)
-
 st.set_page_config(page_title="Digitize your EPD with LLMs", layout="wide")
 st.title("ParsEPD: Digitize your EPD with LLMs")
+st.caption("Upload your Environmental Product Declaration (EPD) and get the OpenEPD format in a click!")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -43,24 +39,38 @@ def ask_rchat(messages):
             stream=False,
             messages=messages
         )
-    print(response)
     return response.choices[0].message.content
 
-st.sidebar.header("Upload EPD")
-uploaded_file = st.sidebar.file_uploader("Upload your EPD file (PDF)", type=["pdf"])
+option = st.checkbox('Do you want the OpenEPD format for this EPD?')
+
+'You selected:', option
+
+st.sidebar.markdown(
+    """
+    <div style="display: flex; align-items: center;">
+        <img src="llm/NIST_logo.png" style="height:40px; margin-right:10px;">
+        <span style="font-size:1.2em; font-weight:bold;">Upload EPD</span>
+    </div>
+    <p>Please upload your Environmental Product Declaration (EPD) PDF file here. The system will extract and analyze its content using AI.</p>
+    """,
+    unsafe_allow_html=True
+)
+
+uploaded_file = st.sidebar.file_uploader("", type=["pdf","htm","html"])
 
 if uploaded_file:
     st.session_state.messages = []
+    check_messages = []
     st.sidebar.success(f"Uploaded: {uploaded_file.name}")
     with st.spinner("Extracting markdown..."):
         try:
-            response = requests.post(os.environ.get("API_URL","http://localhost:8000") + "/upload_pdf/", files={"file": uploaded_file})
+            response = requests.post(os.environ.get("API_URL","http://localhost:8000") + "/upload_epd/", files={"file": uploaded_file})
             if response.ok:
                 markdown = response.json().get("content", "")
                 st.session_state.context = markdown
                 st.session_state.messages.append({
                     "role": "system",
-                    "content":"Markdown extracted successfully.Checking if document is an EPD..."})
+                    "content":"Markdown extracted successfully.Verifying if document is an EPD..."})
 
                 # Step 1: Ask LLM if the document is an EPD
                 check_messages = [
@@ -76,7 +86,18 @@ if uploaded_file:
 
                 if "VALID EPD" in check_reply:
                     # st.sidebar.success("Document identified as EPD. Sending to LLM for further processing.")
-
+                    
+                    # Step 1: Ask LLM to identify the product category
+                #     check_messages = [
+                #     {"role": "system", "content": filecheck_prompt},
+                #     {"role": "system", "content": markdown}
+                # ]
+                #     with st.spinner("Checking document type..."):
+                #         check_reply = ask_rchat(check_messages)
+                #         st.session_state.messages.append({
+                #             "role": "assistant",
+                #             "content": f"EPD Validity Check: {check_reply}"
+                #         })
 
                     messages_for_llm = [
                         {"role": "system", "content": system_prompt},
@@ -87,7 +108,7 @@ if uploaded_file:
                     
                     st.session_state.messages.insert(0, {
                         "role": "system",
-                        "content": f"✅ **PDF content extracted and used as context:**```"
+                        "content": f"✅ **File content extracted and used as context:**"
                     })
 
                     # st.session_state.messages.insert(0, {
@@ -107,7 +128,7 @@ if uploaded_file:
                     # 💬 Add system context + LLM reply to the chat history
                     st.session_state.messages.append({
                         "role": "system",
-                        "content": "✅ PDF processed. Context has been injected."
+                        "content": "✅ File processed. Context has been injected."
                     })
                     st.session_state.messages.append({
                         "role": "assistant",
