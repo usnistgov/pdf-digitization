@@ -2,6 +2,33 @@ import os
 import fitz
 from markdownify import markdownify as md
 from typing import Optional
+import openai
+import httpx
+from dotenv import load_dotenv
+import streamlit as st
+
+load_dotenv()
+
+test_client = openai.OpenAI(
+    base_url=os.environ.get("URL"),
+    api_key=os.environ.get("RCHAT_API_KEY"),
+    http_client=httpx.Client(verify=False)
+)
+
+
+def ask_rchat(messages): 
+    """
+    Function to send messages to the RChat API and get a response.
+    """
+    response = test_client.chat.completions.create(
+            model=os.environ.get("MODEL"),
+            max_tokens=4096,
+            temperature=0.7,
+            top_p=0.95,
+            stream=False,
+            messages=messages
+        )
+    return response.choices[0].message.content
 
 def extract_text_from_pdf(pdf_path: str) -> Optional[str]:
     """
@@ -81,3 +108,8 @@ def html_to_markdown(file_path:str,output_path:Optional[str] = None) -> str:
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(markdown_text)
     return markdown_text
+
+def start_over():
+    st.session_state.clear()
+    uploaded_file = None
+    return uploaded_file

@@ -3,23 +3,23 @@ import requests
 import os
 from dotenv import load_dotenv
 from prompts import system_prompt, filecheck_prompt
-import openai
-import httpx
+from utils import ask_rchat,start_over
+# import json
+from sidebar import sidebar
+# import openai
+# import httpx
 
 load_dotenv()
 
-print(os.environ.get("RCHAT_API_KEY"))
-print(os.environ.get("API_URL"))
-
-test_client = openai.OpenAI(
-    base_url=os.environ.get("URL"),
-    api_key='sk-410cd2b0a4b6471cb2504d5a4a49f4fa',
-    http_client=httpx.Client(verify=False)
-)
-
 st.set_page_config(page_title="Digitize your EPD with LLMs", layout="wide")
-st.title("ParsEPD: Digitize your EPD with LLMs")
-st.caption("Upload your Environmental Product Declaration (EPD) and get the OpenEPD format in a click!")
+st.title("ParsEPD: Digitize your EPD")
+st.caption('''ParsEPD converts EPDs from PDF format to a standardized, machine-readable JSON format (OpenEPD+hyperlink). Users can download the OpenEPD file as well as query the information in the EPD.
+            ParsEPD uses a large language model (LLM) for the parsing, conversion, and querying the information. For details about the process, please see the ParsEPD User Guide or the provided chatbot.
+            \nSteps to Use ParsEPD: 
+            \n- Upload your PDF formatted EPD – ParsEPD automatically  
+            \n- Watch as ParsEPD validates that the PDF is an EPD, identifies, its product category, and creates the OpenEPD file.
+            \n- Download the OpenEPD File using the “Download OpenEPD File” button and/or ask question(s) about the EPD using the LLM chat.
+            \nThe user can remove or replace the EPD as well as start over using options provided in left hand column. Only the most recent uploaded EPD is available for conversion and querying.''')
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -27,40 +27,24 @@ if "messages" not in st.session_state:
 if "context" not in st.session_state:
     st.session_state.context = ""
 
-def ask_rchat(messages): 
-    """
-    Function to send messages to the RChat API and get a response.
-    """
-    response = test_client.chat.completions.create(
-            model=os.environ.get("MODEL"),
-            max_tokens=4096,
-            temperature=0.7,
-            top_p=0.95,
-            stream=False,
-            messages=messages
-        )
-    return response.choices[0].message.content
+if "last_file_name" not in st.session_state:
+    st.session_state.last_file_name = ""
 
-option = st.checkbox('Do you want the OpenEPD format for this EPD?')
+if "check_reply" not in st.session_state:
+    st.session_state.check_reply = ""
 
-'You selected:', option
+# option = st.checkbox('Do you want the OpenEPD format for this EPD?')
+# 'You selected:', option
 
-st.sidebar.markdown(
-    """
-    <div style="display: flex; align-items: center;">
-        <img src="llm/NIST_logo.png" style="height:40px; margin-right:10px;">
-        <span style="font-size:1.2em; font-weight:bold;">Upload EPD</span>
-    </div>
-    <p>Please upload your Environmental Product Declaration (EPD) PDF file here. The system will extract and analyze its content using AI.</p>
-    """,
-    unsafe_allow_html=True
-)
-
-uploaded_file = st.sidebar.file_uploader("", type=["pdf","htm","html"])
+uploaded_file = sidebar()
+st.sidebar.button("Start Over", key="start_over", on_click=lambda: start_over())
 
 if uploaded_file:
-    st.session_state.messages = []
-    check_messages = []
+    if uploaded_file.name != st.session_state.last_file_name:
+        st.session_state.last_file_name = uploaded_file.name
+        st.session_state.messages = []
+        st.session_state.check_reply = None
+        check_messages = []
     st.sidebar.success(f"Uploaded: {uploaded_file.name}")
     with st.spinner("Extracting markdown..."):
         try:
@@ -77,27 +61,22 @@ if uploaded_file:
                     {"role": "system", "content": filecheck_prompt},
                     {"role": "system", "content": markdown}
                 ]
+                # if st.session_state.check_reply is None:
                 with st.spinner("Checking document type..."):
                     check_reply = ask_rchat(check_messages)
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": f"EPD Validity Check: {check_reply}"
                     })
+                if st.session_state.check_reply is None:
+                    with st.spinner("Checking document type..."):
+                        check_reply = ask_rchat(check_messages)
+                        st.session_state.check_reply = check_reply
+                else:
+                    check_reply = st.session_state.check_reply
+                
 
                 if "VALID EPD" in check_reply:
-                    # st.sidebar.success("Document identified as EPD. Sending to LLM for further processing.")
-                    
-                    # Step 1: Ask LLM to identify the product category
-                #     check_messages = [
-                #     {"role": "system", "content": filecheck_prompt},
-                #     {"role": "system", "content": markdown}
-                # ]
-                #     with st.spinner("Checking document type..."):
-                #         check_reply = ask_rchat(check_messages)
-                #         st.session_state.messages.append({
-                #             "role": "assistant",
-                #             "content": f"EPD Validity Check: {check_reply}"
-                #         })
 
                     messages_for_llm = [
                         {"role": "system", "content": system_prompt},
@@ -108,27 +87,16 @@ if uploaded_file:
                     
                     st.session_state.messages.insert(0, {
                         "role": "system",
-                        "content": f"✅ **File content extracted and used as context:**"
+                        "content": f"✅ **File content extracted:**"
                     })
-
-                    # st.session_state.messages.insert(0, {
-                    #     "role": "system",
-                    #     "content": f"{system_prompt}\n"
-                    # })\
-                    
-                    # st.session_state.messages.insert(1, {
-                    #     "role": "system",
-                    #     "content": f"{filecheck_prompt}\n"
-                    # })
                     
                     with st.spinner("Waiting for LLM to process the document..."):
                         llm_response = ask_rchat(messages_for_llm)
-                        print(f"LLM response: {llm_response}")
 
                     # 💬 Add system context + LLM reply to the chat history
                     st.session_state.messages.append({
                         "role": "system",
-                        "content": "✅ File processed. Context has been injected."
+                        "content": "✅ File processed."
                     })
                     st.session_state.messages.append({
                         "role": "assistant",
@@ -148,7 +116,7 @@ if uploaded_file:
             st.sidebar.error(f"{e}")   
 
 # System message
-st.chat_message("system").markdown("You're chatting with an LLM. Uploaded EPD content will be used as context.")
+st.chat_message("system").markdown("You're chatting with an LLM. Uploaded EPD will be used.")
 
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
@@ -178,3 +146,18 @@ if user_input:
 
     st.session_state.messages.append({"role": "assistant", "content": reply})
     st.chat_message("assistant").markdown(reply)
+
+    
+    # json_candidate = json.loads(reply)
+    # st.download_button(
+    #     label="📥 Download LLM Response as JSON",
+    #     data=json.dumps(json_candidate, indent=2),
+    #     file_name="epd_output.json",
+    #     mime="application/json"
+    # )
+    st.download_button(
+        label="Download JSON",
+        data=reply,
+        file_name="llm_response.txt",
+        mime="text/plain"
+    )        
