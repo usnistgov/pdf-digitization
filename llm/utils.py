@@ -110,6 +110,14 @@ def html_to_markdown(file_path:str,output_path:Optional[str] = None) -> str:
     return markdown_text
 
 def start_over():
+    print("star over called")
     st.session_state.clear()
+    st.session_state.show_confirm = False
+    st.session_state.messages = []
+    st.session_state.context = ""
+    st.session_state.last_file_name = ""
+    st.session_state.check_reply = ""
+    st.session_state.markdown = None
     uploaded_file = None
+    print(st.session_state)
     return uploaded_file
