@@ -6,6 +6,7 @@ import openai
 import httpx
 from dotenv import load_dotenv
 import streamlit as st
+import re
 
 load_dotenv()
 
@@ -121,3 +122,16 @@ def start_over():
     uploaded_file = None
     print(st.session_state)
     return uploaded_file
+
+def extract_first_json(text: str) -> str:
+    # Remove markdown fences if present
+    if text.strip().startswith("```"):
+        text = re.sub(r"^```[a-zA-Z0-9]*\n?", "", text.strip())
+        text = re.sub(r"\n?```$", "", text.strip())
+
+    # Find the first JSON object using regex
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        return match.group(0).strip()
+    else:
+        return text.strip()  # Return the original text if no JSON found

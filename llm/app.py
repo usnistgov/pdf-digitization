@@ -5,8 +5,9 @@ from dotenv import load_dotenv
 from prompts import system_prompt, filecheck_prompt, extraction_prompt_json, json_schema
 from utils import ask_rchat,start_over
 from sidebar import sidebar
-import json
 import time
+import json
+import jsonschema
 
 load_dotenv()
 
@@ -222,18 +223,33 @@ if uploaded_file:
         # Step 4: Generate openEPD JSON
         with st.spinner("Generating openEPD format..."):
             openepd = ask_rchat([
-                {"role": "system", "content": st.session_state.markdown + "\n" + extraction_prompt_json + "\n" + json_schema}
+                {"role": "system", "content": "The EPD is " + st.session_state.markdown + "\n" + extraction_prompt_json}
             ])
         st.session_state.messages.append({
             "role": "assistant",
             "content": openepd
         })
 
+        try:
+            # Load and validate
+            with open('openepd_validation_schema.json', 'r') as file:
+                openepd_schema = json.load(file)
+            parsed_json = json.loads(openepd)
+            jsonschema.validate(instance=parsed_json, schema=openepd_schema)
+            validation_status = "✅ JSON is valid according to the schema."
+            validation_color = "green"
+        except jsonschema.exceptions.ValidationError as e:
+            validation_status = f"❌ JSON is invalid: {e.message}"
+            validation_color = "red"
+
+        pretty_openepd = json.dumps(parsed_json, indent=4)
+
         with st.chat_message("assistant"):
             st.success("✅ openEPD format generated successfully.")
             st.markdown("Extend the expander below to view the full openEPD format.")
             with st.expander("openEPD Format", expanded = False):
-                st.code(openepd, height=1000)
+                st.code(pretty_openepd, height=1000)
+                st.markdown(f"<span style='color:{validation_color}'>{validation_status}</span>", unsafe_allow_html=True)
                 st.download_button("⬇️ Download JSON", openepd, file_name="openepd.json", mime="application/json")
 
     else:
@@ -242,18 +258,3 @@ if uploaded_file:
             "content": "❌ The uploaded document is not identified as an EPD. Please upload a valid EPD."
         })
         st.sidebar.error("❌ Invalid EPD. The uploaded document is not identified as an EPD.")
-
-
-# Add user message
-# if user_input:
-#     st.session_state.messages.append({"role": "user", "content": user_input})
-#     st.chat_message("user").markdown(user_input)
-
-#     # Combine context + user question
-#     prompt = f"{st.session_state.context}\n\nUser: {user_input}"
-#     messages_for_llm = [
-#         # {"role": "system", "content": system_prompt},
-#         {"role": "system", "content": st.session_state.context}
-#     ] + [
-#         {"role": m["role"], "content": m["content"]} for m in st.session_state.messages if m["role"] in {"user", "assistant"}
-#     ]

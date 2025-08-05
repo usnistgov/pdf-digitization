@@ -60,17 +60,20 @@ Product category\n
 If any information is not available in the document, indicate 'Not specified'.'''
 
 extraction_prompt_json = '''
-You are an expert assistant for digitizing Environmental Product Declarations (EPDs). Your task is to extract structured data from an EPD document and convert it into a JSON object following the exact schema defined below.
-Instructions:
-Extract values from the document and populate the JSON object.
-Use the data types strictly as specified (e.g., string, number, boolean, array, object).
-Do not include any explanation or commentary. Return only the JSON.
-If you cannot find a value for a field, insert the string "--" as the value (or within nested fields).
-All keys must be present in the JSON, even if the value is "--".
-Units must match what is present in the document or use "--" if unclear.
-Do not hallucinate or infer data that is not explicitly mentioned in the EPD document.
-Use "--" even for numeric fields where values are missing or ambiguous.
-Return your response strictly as valid JSON, matching the structure and order below:
+You are an expert at extracting data from Environmental Product Declarations (EPDs) into a structured format.
+Your task:
+1. Read the provided EPD content carefully.
+2. Extract all values into the JSON object specified below.
+3. Output only the JSON object — no code fences (```), no explanations, no text before or after.
+4. If any field cannot be found, set its value to the string "--".
+5. Use exactly the data types given in the schema (string, number, boolean, array, object).
+6. Include all fields in the output, even if they are "--".
+7. Ensure the JSON is valid and can be parsed without modification.
+
+Output Format (do not add any other text, just this JSON object):
+
+{"id":"","doctype":"","openepd_version":"","version":0,"language":"","private":false,"declaration_url":"","lca_discussion":"","program_operator_doc_id":"","program_operator_version":"","third_party_verification_url":"","third_party_verifier_email":"","epd_developer_email":"","date_of_issue":"","valid_until":"","declared_unit":{"qty":0,"unit":""},"kg_per_declared_unit":{"qty":0,"unit":""},"kg_C_per_declared_unit":{"qty":0,"unit":""},"product_name":"","product_sku":"","product_description":"","product_image_small":"","product_image":"","product_service_life_years":0,"product_classes":{"masterformat":"","UNSPSC":["",""],"NAPCS":"","EC3":"","io.cqd.ec3":"","CN":"","oekobau.dat":"","INIES":""},"applicable_in":["","","","",""],"product_usage_description":"","product_usage_image":"","manufacturing_description":"","manufacturing_image":"","ec3":{"gwp_uncertainty_adjusted_a1a2a3_traci21":0,"gwp_uncertainty_adjusted_a1a2a3_ar5":0,"category":"","manufacturer_specific":false,"plant_specific":false,"product_specific":false,"batch_specific":false,"supply_chain_specificity":0},"ref":"","manufacturer":{"web_domain":""},"plants":[{"id":"","name":""},{"id":"","name":""}],"program_operator":{"web_domain":"","alt_ids":{"wbcsd":""},"name":"","alt_names":["",""],"ref":""},"third_party_verifier":{"web_domain":""},"epd_developer":{"web_domain":""},"pcr":{"id":"","issuer_doc_id":"","name":"","short_name":"","version":"","date_of_issue":"","valid_until":"","declared_units":[{}],"doc":"","status":"","product_classes":{"masterformat":"","UNSPSC":["",""],"NAPCS":"","EC3":"","io.cqd.ec3":"","CN":"","oekobau.dat":"","INIES":""},"ref":""},"compliance":[{"short_name":"","name":"","link":"","ref":""}],"attachments":{"datasheet":""},"alt_ids":{"wbcsd":""},"includes":[{"qty":0,"link":"","gwp_fraction":0,"evidence_type":"","citation":""}],"impacts":{"TRACI 2.1":{"gwp":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"odp":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}}}},"resource_uses":{"RPRe":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"RPRm":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"NRPRe":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"NRPRm":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"sm":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"rsf":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"nrsf":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"re":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"fw":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}}},"output_flows":{"hwd":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"nhwd":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"hlrw":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"illrw":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"cru":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"mr":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"mer":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"ee":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}},"eh":{"A1A2A3":{"mean":0,"unit":"","rsd":0,"dist":""}}}}
+
 '''
 
 json_schema = '''
