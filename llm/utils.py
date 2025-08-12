@@ -10,6 +10,15 @@ import re
 
 load_dotenv()
 
+def caption():
+    return '''parsEPD converts an EPD from PDF or HTML format to a standardized, machine-readable JSON format (openEPD) using a large language model (LLM) for the parsing and conversion. For details about the process, please see the ParsEPD User Guide.
+            \nSteps to Use ParsEPD: 
+            \n- Upload your PDF formatted EPD – ParsEPD automatically  
+            \n- Watch as parsEPD validates that the PDF is an EPD, identifies its product category, and creates the openEPD file.
+            \n- View the openEPD file in the chat.
+            \n- Download the openEPD File using the “Download openEPD File” button and/or ask question(s) about the EPD using the LLM chat.
+            \nThe user can remove or replace the EPD as well as start over using options provided in left hand column. Only the most recent uploaded EPD is available for conversion.'''
+
 test_client = openai.OpenAI(
     base_url=os.environ.get("URL"),
     api_key=os.environ.get("RCHAT_API_KEY"),
@@ -24,7 +33,7 @@ def ask_rchat(messages):
     response = test_client.chat.completions.create(
             model=os.environ.get("MODEL"),
             max_tokens=4096,
-            temperature=0.7,
+            temperature=0,
             top_p=0.95,
             stream=False,
             messages=messages
@@ -34,10 +43,8 @@ def ask_rchat(messages):
 def extract_text_from_pdf(pdf_path: str) -> Optional[str]:
     """
     Extract text from a PDF file.
-    
     Args:
         pdf_path (str): Path to the PDF file.
-        
     Returns:
         str: Extracted text from the PDF, or None if extraction fails.
     """
@@ -55,14 +62,11 @@ def extract_text_from_pdf(pdf_path: str) -> Optional[str]:
     except Exception as e:
         print(f"Error extracting text from PDF: {e}")
         return None
-    
 def convert_text_to_markdown(text: str) -> str:
     """
     Convert plain text to Markdown format.
-    
     Args:
         text (str): Input text to convert.
-        
     Returns:
         str: Converted Markdown text.
     """
@@ -135,3 +139,17 @@ def extract_first_json(text: str) -> str:
         return match.group(0).strip()
     else:
         return text.strip()  # Return the original text if no JSON found
+    
+def sanitize_string(s: str) -> str:
+    """Remove non-printable characters from strings."""
+    return re.sub(r"[^\x20-\x7E]", "", s)
+
+def sanitize_json(data):
+    """Recursively sanitize all string values in JSON."""
+    if isinstance(data, dict):
+        return {k: sanitize_json(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [sanitize_json(v) for v in data]
+    elif isinstance(data, str):
+        return sanitize_string(data)
+    return data
