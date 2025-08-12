@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import "../public/nist-header-footer/nist-combined.css";
 import "../public/nist-header-footer/nist-header-footer-v-2.0.js";
 import { guardDocumentForLLM } from "./lib/guards";
-import { chatCompletion, type ChatMessage } from "./lib/llm";
+import { type ChatMessage, chatCompletion } from "./lib/llm";
 import { htmlToMarkdown, pdfToMarkdown } from "./lib/pdf";
 
 // Prompts & Schema are referenced only – you’ll fill them in
@@ -12,9 +12,9 @@ import openEPDSchema from "../../llm/openepd_validation_schema.json";
 import { extraction_prompt_json, filecheck_prompt, system_prompt } from "./lib/prompts";
 
 export default function App() {
-	const [apiUrl, setApiUrl] = useState(localStorage.getItem("pars_api_url") || "");
-	const [apiKey, setApiKey] = useState(localStorage.getItem("pars_api_key") || "");
-	const [model, setModel] = useState(localStorage.getItem("pars_model") || "gpt-4o-mini");
+	const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_LLM_URL || "");
+	const [apiKey, setApiKey] = useState(import.meta.env.VITE_RCHAT_API_KEY || "");
+	const [model, setModel] = useState(import.meta.env.VITE_MODEL || "");
 
 	const [busy, setBusy] = useState(false);
 	const [markdown, setMarkdown] = useState("");
@@ -74,10 +74,9 @@ export default function App() {
 				apiKey,
 				model,
 				messages: [
-					{ role: "system", content: filecheck_prompt }, // YOU provide it
+					{ role: "system", content: filecheck_prompt },
 					{ role: "user", content: markdown },
 				],
-				temperature: 0,
 			});
 			addMsg({ role: "assistant", content: `EPD Validity Check: ${reply}` });
 		} catch (e: any) {
@@ -96,10 +95,9 @@ export default function App() {
 				apiKey,
 				model,
 				messages: [
-					{ role: "system", content: extraction_prompt_json }, // YOU provide it
+					{ role: "system", content: extraction_prompt_json },
 					{ role: "user", content: `<EPD_Content>\n${markdown}\n</EPD_Content>` },
 				],
-				temperature: 0,
 			});
 
 			// Extract first {...}
@@ -150,7 +148,7 @@ export default function App() {
 			<section className="card row">
 				<h3>LLM Settings</h3>
 				<div className="row row-3">
-					<input
+					{/* <input
 						placeholder="OpenAI-compatible Base URL (e.g., https://api.openai.com/v1)"
 						value={apiUrl}
 						onChange={(e) => setApiUrl(e.target.value)}
@@ -159,8 +157,14 @@ export default function App() {
 						placeholder="API Key (stored in localStorage)"
 						value={apiKey}
 						onChange={(e) => setApiKey(e.target.value)}
+					/> */}
+					<label>Model</label>
+					<input
+						placeholder="Model (e.g., gpt-4o-mini)"
+						value={model}
+						onChange={(e) => setModel(e.target.value)}
+						disabled={true}
 					/>
-					<input placeholder="Model (e.g., gpt-4o-mini)" value={model} onChange={(e) => setModel(e.target.value)} />
 				</div>
 			</section>
 
