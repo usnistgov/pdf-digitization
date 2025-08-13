@@ -14,9 +14,9 @@ def caption():
     return '''parsEPD converts an EPD from PDF or HTML format to a standardized, machine-readable JSON format (openEPD) using a large language model (LLM) for the parsing and conversion. For details about the process, please see the ParsEPD User Guide.
             \nSteps to Use ParsEPD: 
             \n- Upload your PDF formatted EPD – ParsEPD automatically  
-            \n- Watch as parsEPD validates that the PDF is an EPD, identifies its product category, and creates the openEPD file.
+            \n- Watch as parsEPD validates that the PDF is an EPD, identifies, its product category, and then creates and displays the openEPD file.
             \n- View the openEPD file in the chat.
-            \n- Download the openEPD File using the “Download openEPD File” button and/or ask question(s) about the EPD using the LLM chat.
+            \n- Download the openEPD File using the “Download openEPD File” button in the chat.
             \nThe user can remove or replace the EPD as well as start over using options provided in left hand column. Only the most recent uploaded EPD is available for conversion.'''
 
 test_client = openai.OpenAI(

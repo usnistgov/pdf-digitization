@@ -3,7 +3,7 @@ import streamlit as st
 def sidebar():
    
     st.sidebar.title("parsEPD: Digitize your EPD")
-    st.sidebar.caption("Please upload your Environmental Product Declaration (EPD) PDF file here. The system will extract and analyze its content using AI.")
+    st.sidebar.caption("Please upload your Environmental Product Declaration (EPD) PDF file here. The system will extract, analyze its content and provide you with the openEPD JSON.")
 
     # st.sidebar.markdown(
     # """
