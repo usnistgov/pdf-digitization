@@ -1,196 +1,217 @@
 {
-	"type": "object",
+	"required": [
+		"doctype",
+		"openepd_version",
+		"id",
+		"date_of_issue",
+		"valid_until",
+		"version",
+		"declared_unit",
+		"product_classes",
+		"pcr",
+		"third_party_verifier",
+		"epd_developer",
+		"program_operator",
+		"manufacturer",
+		"plants",
+		"applicable_in",
+		"impacts",
+		"resource_uses",
+		"output_flows"
+	],
 	"properties": {
-		"id": { "type": "string" },
 		"doctype": { "type": "string" },
 		"openepd_version": { "type": "string" },
-		"version": { "type": ["number", "string"] },
-		"language": { "type": "string" },
-		"private": { "type": ["boolean", "string"] },
-		"declaration_url": { "type": "string" },
-		"lca_discussion": { "type": "string" },
-		"program_operator_doc_id": { "type": "string" },
-		"program_operator_version": { "type": "string" },
-		"third_party_verification_url": { "type": "string" },
-		"third_party_verifier_email": { "type": "string" },
-		"epd_developer_email": { "type": "string" },
-		"date_of_issue": { "type": "string" },
-		"valid_until": { "type": "string" },
+		"id": { "type": "string" },
+		"date_of_issue": { "type": "string", "format": "date" },
+		"valid_until": { "type": "string", "format": "date" },
+		"version": { "type": "integer" },
 		"declared_unit": {
 			"type": "object",
-			"properties": { "qty": { "type": ["number", "string"] }, "unit": { "type": "string" } },
+			"properties": {
+				"qty": { "type": "number" },
+				"unit": { "type": "string" }
+			},
 			"required": ["qty", "unit"]
 		},
-		"kg_per_declared_unit": {
+		"_per_declared_unit": {
 			"type": "object",
-			"properties": { "qty": { "type": ["number", "string"] }, "unit": { "type": "string" } },
+			"properties": {
+				"qty": { "type": "number" },
+				"unit": { "type": "string" }
+			},
 			"required": ["qty", "unit"]
 		},
-		"kg_C_per_declared_unit": {
-			"type": "object",
-			"properties": { "qty": { "type": ["number", "string"] }, "unit": { "type": "string" } },
-			"required": ["qty", "unit"]
-		},
-		"product_name": { "type": "string" },
-		"product_sku": { "type": "string" },
-		"product_description": { "type": "string" },
-		"product_image_small": { "type": "string" },
-		"product_image": { "type": "string" },
-		"product_service_life_years": { "type": ["number", "string"] },
 		"product_classes": {
 			"type": "object",
-			"properties": {
-				"masterformat": { "type": "string" },
-				"UNSPSC": { "type": "array", "items": { "type": "string" } },
-				"NAPCS": { "type": "string" },
-				"EC3": { "type": "string" },
-				"io.cqd.ec3": { "type": "string" },
-				"CN": { "type": "string" },
-				"oekobau.dat": { "type": "string" },
-				"INIES": { "type": "string" }
-			},
-			"required": ["masterformat", "UNSPSC", "NAPCS", "EC3", "io.cqd.ec3", "CN", "oekobau.dat", "INIES"]
-		},
-		"applicable_in": { "type": "array", "items": { "type": "string" } },
-		"product_usage_description": { "type": "string" },
-		"product_usage_image": { "type": "string" },
-		"manufacturing_description": { "type": "string" },
-		"manufacturing_image": { "type": "string" },
-		"ec3": {
-			"type": "object",
-			"properties": {
-				"gwp_uncertainty_adjusted_a1a2a3_traci21": { "type": ["number", "string"] },
-				"gwp_uncertainty_adjusted_a1a2a3_ar5": { "type": ["number", "string"] },
-				"category": { "type": "string" },
-				"manufacturer_specific": { "type": ["boolean", "string"] },
-				"plant_specific": { "type": ["boolean", "string"] },
-				"product_specific": { "type": ["boolean", "string"] },
-				"batch_specific": { "type": ["boolean", "string"] },
-				"supply_chain_specificity": { "type": ["number", "string"] }
-			},
-			"required": [
-				"gwp_uncertainty_adjusted_a1a2a3_traci21",
-				"gwp_uncertainty_adjusted_a1a2a3_ar5",
-				"category",
-				"manufacturer_specific",
-				"plant_specific",
-				"product_specific",
-				"batch_specific",
-				"supply_chain_specificity"
-			]
-		},
-		"ref": { "type": "string" },
-		"manufacturer": {
-			"type": "object",
-			"properties": { "web_domain": { "type": "string" } },
-			"required": ["web_domain"]
-		},
-		"plants": {
-			"type": "array",
-			"items": {
-				"type": "object",
-				"properties": { "id": { "type": "string" }, "name": { "type": "string" } },
-				"required": ["id", "name"]
-			}
-		},
-		"program_operator": {
-			"type": "object",
-			"properties": {
-				"web_domain": { "type": "string" },
-				"alt_ids": { "type": "object", "properties": { "wbcsd": { "type": "string" } }, "required": ["wbcsd"] },
-				"name": { "type": "string" },
-				"alt_names": { "type": "array", "items": { "type": "string" } },
-				"ref": { "type": "string" }
-			},
-			"required": ["web_domain", "alt_ids", "name", "alt_names", "ref"]
-		},
-		"third_party_verifier": {
-			"type": "object",
-			"properties": { "web_domain": { "type": "string" } },
-			"required": ["web_domain"]
-		},
-		"epd_developer": {
-			"type": "object",
-			"properties": { "web_domain": { "type": "string" } },
-			"required": ["web_domain"]
+			"additionalProperties": { "type": "string" }
 		},
 		"pcr": {
 			"type": "object",
 			"properties": {
 				"id": { "type": "string" },
-				"issuer_doc_id": { "type": "string" },
-				"name": { "type": "string" },
-				"short_name": { "type": "string" },
-				"version": { "type": "string" },
-				"date_of_issue": { "type": "string" },
-				"valid_until": { "type": "string" },
-				"declared_units": { "type": "array", "items": { "type": "object", "properties": {}, "required": [] } },
-				"doc": { "type": "string" },
-				"status": { "type": "string" },
-				"product_classes": {
+				"issuer": {
 					"type": "object",
 					"properties": {
-						"masterformat": { "type": "string" },
-						"UNSPSC": { "type": "array", "items": { "type": "string" } },
-						"NAPCS": { "type": "string" },
-						"EC3": { "type": "string" },
-						"io.cqd.ec3": { "type": "string" },
-						"CN": { "type": "string" },
-						"oekobau.dat": { "type": "string" },
-						"INIES": { "type": "string" }
+						"web_domain": { "type": "string" },
+						"name": { "type": "string" },
+						"alt_names": {
+							"type": "array",
+							"items": { "type": "string" }
+						}
 					},
-					"required": ["masterformat", "UNSPSC", "NAPCS", "EC3", "io.cqd.ec3", "CN", "oekobau.dat", "INIES"]
+					"required": ["web_domain", "name", "alt_names"]
 				},
-				"ref": { "type": "string" }
+				"name": { "type": "string" },
+				"version": { "type": "string" }
 			},
-			"required": [
-				"id",
-				"issuer_doc_id",
-				"name",
-				"short_name",
-				"version",
-				"date_of_issue",
-				"valid_until",
-				"declared_units",
-				"doc",
-				"status",
-				"product_classes",
-				"ref"
-			]
+			"required": ["id", "issuer", "name", "version"]
 		},
-		"compliance": {
+		"declaration_url": { "type": "string" },
+		"alt_ids": {
+			"type": "object",
+			"additionalProperties": { "type": "string" }
+		},
+		"third_party_verifier": {
+			"type": "object",
+			"properties": {
+				"web_domain": { "type": "string" },
+				"name": { "type": "string" },
+				"alt_names": {
+					"type": "array",
+					"items": { "type": "string" }
+				}
+			}
+		},
+		"third_party_verifier_email": { "type": "string" },
+		"epd_developer": {
+			"type": "object",
+			"properties": {
+				"web_domain": { "type": "string" },
+				"name": { "type": "string" },
+				"alt_names": {
+					"type": "array",
+					"items": { "type": "string" }
+				},
+				"hq_location": {
+					"type": "object",
+					"properties": {
+						"address": { "type": "string" },
+						"country": { "type": "string" },
+						"jurisdiction": { "type": "string" }
+					}
+				}
+			}
+		},
+		"epd_developer_email": { "type": "string" },
+		"program_operator": {
+			"type": "object",
+			"properties": {
+				"web_domain": { "type": "string" },
+				"name": { "type": "string" },
+				"alt_names": {
+					"type": "array",
+					"items": { "type": "string" }
+				}
+			}
+		},
+		"program_operator_doc_id": { "type": "string" },
+		"program_operator_version": { "type": "string" },
+		"attachments": {
+			"type": "object",
+			"additionalProperties": { "type": "string" }
+		},
+		"product_name": { "type": "string" },
+		"product_description": { "type": "string" },
+		"manufacturer": {
+			"type": "object",
+			"properties": {
+				"web_domain": { "type": "string" },
+				"name": { "type": "string" },
+				"alt_ids": {
+					"type": "object",
+					"additionalProperties": { "type": "string" }
+				},
+				"hq_location": {
+					"type": "object",
+					"properties": {
+						"latlng": {
+							"type": "object",
+							"properties": {
+								"lat": { "type": "number" },
+								"lng": { "type": "number" }
+							}
+						},
+						"address": { "type": "string" },
+						"country": { "type": "string" },
+						"jurisdiction": { "type": "string" }
+					}
+				}
+			}
+		},
+		"plants": {
 			"type": "array",
 			"items": {
 				"type": "object",
 				"properties": {
-					"short_name": { "type": "string" },
+					"alt_ids": {
+						"type": "object",
+						"additionalProperties": { "type": "string" }
+					},
+					"id": { "type": "string" },
+					"owner": {
+						"type": "object",
+						"properties": {
+							"web_domain": { "type": "string" },
+							"name": { "type": "string" },
+							"alt_ids": {
+								"type": "object",
+								"additionalProperties": { "type": "string" }
+							},
+							"hq_location": {
+								"type": "object",
+								"properties": {
+									"latlng": {
+										"type": "object",
+										"properties": {
+											"lat": { "type": "number" },
+											"lng": { "type": "number" }
+										}
+									},
+									"address": { "type": "string" },
+									"country": { "type": "string" },
+									"jurisdiction": { "type": "string" }
+								}
+							}
+						}
+					},
 					"name": { "type": "string" },
-					"link": { "type": "string" },
-					"ref": { "type": "string" }
-				},
-				"required": ["short_name", "name", "link", "ref"]
+					"location": {
+						"type": "object",
+						"properties": {
+							"latlng": {
+								"type": "object",
+								"properties": {
+									"lat": { "type": "number" },
+									"lng": { "type": "number" }
+								}
+							},
+							"address": { "type": "string" },
+							"country": { "type": "string" },
+							"jurisdiction": { "type": "string" }
+						}
+					}
+				}
 			}
 		},
-		"attachments": { "type": "object", "properties": { "datasheet": { "type": "string" } }, "required": ["datasheet"] },
-		"alt_ids": { "type": "object", "properties": { "wbcsd": { "type": "string" } }, "required": ["wbcsd"] },
-		"includes": {
+		"applicable_in": {
 			"type": "array",
-			"items": {
-				"type": "object",
-				"properties": {
-					"qty": { "type": ["number", "string"] },
-					"link": { "type": "string" },
-					"gwp_fraction": { "type": ["number", "string"] },
-					"evidence_type": { "type": "string" },
-					"citation": { "type": "string" }
-				},
-				"required": ["qty", "link", "gwp_fraction", "evidence_type", "citation"]
-			}
+			"items": { "type": "string" }
 		},
 		"impacts": {
 			"type": "object",
 			"properties": {
-				"TRACI2.1": {
+				"TRACI 2.1": {
 					"type": "object",
 					"properties": {
 						"gwp": {
@@ -198,385 +219,154 @@
 							"properties": {
 								"A1A2A3": {
 									"type": "object",
-									"properties": {
-										"mean": { "type": ["number", "string"] },
-										"unit": { "type": "string" },
-										"rsd": { "type": ["number", "string"] },
-										"dist": { "type": "string" }
-									},
-									"required": ["mean", "unit", "rsd", "dist"]
-								}
-							},
-							"required": ["A1A2A3"]
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A1": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A2": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } }
+							}
 						},
 						"odp": {
 							"type": "object",
 							"properties": {
 								"A1A2A3": {
 									"type": "object",
-									"properties": {
-										"mean": { "type": ["number", "string"] },
-										"unit": { "type": "string" },
-										"rsd": { "type": ["number", "string"] },
-										"dist": { "type": "string" }
-									},
-									"required": ["mean", "unit", "rsd", "dist"]
-								}
-							},
-							"required": ["A1A2A3"]
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A1": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A2": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } }
+							}
+						},
+						"ap": {
+							"type": "object",
+							"properties": {
+								"A1A2A3": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A1": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A2": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } }
+							}
+						},
+						"ep": {
+							"type": "object",
+							"properties": {
+								"A1A2A3": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A1": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A2": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } }
+							}
+						},
+						"pocp": {
+							"type": "object",
+							"properties": {
+								"A1A2A3": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A1": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A2": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } }
+							}
+						},
+						"gwp_biogenic": {
+							"type": "object",
+							"properties": {
+								"A1A2A3": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A1": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A2": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } }
+							}
+						},
+						"gwp_luluc": {
+							"type": "object",
+							"properties": {
+								"A1A2A3": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A1": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A2": {
+									"type": "object",
+									"properties": { "mean": { "type": "number" }, "unit": { "type": "string" } }
+								},
+								"A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } }
+							}
 						}
-					},
-					"required": ["gwp", "odp"]
+					}
 				}
-			},
-			"required": ["TRACI2.1"]
+			}
 		},
 		"resource_uses": {
 			"type": "object",
-			"properties": {
-				"RPRe": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"RPRm": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"NRPRe": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"NRPRm": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"sm": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"rsf": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"nrsf": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"re": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"fw": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
+			"additionalProperties": {
+				"type": "object",
+				"properties": {
+					"A1A2A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } },
+					"A1": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } },
+					"A2": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } },
+					"A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } }
 				}
-			},
-			"required": ["RPRe", "RPRm", "NRPRe", "NRPRm", "sm", "rsf", "nrsf", "re", "fw"]
+			}
 		},
 		"output_flows": {
 			"type": "object",
-			"properties": {
-				"hwd": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"nhwd": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"hlrw": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"illrw": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"cru": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"mr": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"mer": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"ee": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
-				},
-				"eh": {
-					"type": "object",
-					"properties": {
-						"A1A2A3": {
-							"type": "object",
-							"properties": {
-								"mean": { "type": ["number", "string"] },
-								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
-								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
-						}
-					},
-					"required": ["A1A2A3"]
+			"additionalProperties": {
+				"type": "object",
+				"properties": {
+					"A1A2A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } },
+					"A1": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } },
+					"A2": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } },
+					"A3": { "type": "object", "properties": { "mean": { "type": "number" }, "unit": { "type": "string" } } }
 				}
-			},
-			"required": ["hwd", "nhwd", "hlrw", "illrw", "cru", "mr", "mer", "ee", "eh"]
+			}
 		}
-	},
-	"required": [
-		"id",
-		"doctype",
-		"openepd_version",
-		"version",
-		"language",
-		"private",
-		"declaration_url",
-		"lca_discussion",
-		"program_operator_doc_id",
-		"program_operator_version",
-		"third_party_verification_url",
-		"third_party_verifier_email",
-		"epd_developer_email",
-		"date_of_issue",
-		"valid_until",
-		"declared_unit",
-		"kg_per_declared_unit",
-		"kg_C_per_declared_unit",
-		"product_name",
-		"product_sku",
-		"product_description",
-		"product_image_small",
-		"product_image",
-		"product_service_life_years",
-		"product_classes",
-		"applicable_in",
-		"product_usage_description",
-		"product_usage_image",
-		"manufacturing_description",
-		"manufacturing_image",
-		"ec3",
-		"ref",
-		"manufacturer",
-		"plants",
-		"program_operator",
-		"third_party_verifier",
-		"epd_developer",
-		"pcr",
-		"compliance",
-		"attachments",
-		"alt_ids",
-		"includes",
-		"impacts",
-		"resource_uses",
-		"output_flows"
-	]
+	}
 }
