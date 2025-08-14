@@ -1,6 +1,22 @@
+import {
+	Box,
+	Button,
+	CodeBlock,
+	Collapsible,
+	Container,
+	FileUpload,
+	HStack,
+	Icon,
+	List,
+	Spinner,
+	Text,
+	createShikiAdapter,
+} from "@chakra-ui/react";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import React, { useEffect, useMemo, useState } from "react";
+import { LuArrowDownToLine, LuUpload } from "react-icons/lu";
+import type { HighlighterGeneric } from "shiki";
 import "../public/nist-header-footer/nist-combined.css";
 import "../public/nist-header-footer/nist-header-footer-v-2.0.js";
 import { guardDocumentForLLM } from "./lib/guards";
@@ -111,26 +127,31 @@ export default function App() {
 		}
 	};
 
-	const onFileChange = async (file: File) => {
+	const onFileChange = async (files: File[]) => {
+		const f = Array.isArray(files) ? files?.[0] : files?.item(0);
 		if (status != "idle") setStatus("Processing…");
 		console.log("file changed");
 		try {
-			const ext = file.name.toLowerCase().split(".").pop();
-			let md = "";
 			// reset state on file upload
 			setMarkdown("");
 			setMessages([]);
 			setValidation("");
 			setJsonOut(null);
+
+			const ext = f.name.toLowerCase().split(".").pop();
+			let md = "";
+
 			if (ext === "pdf") {
-				md = await pdfToMarkdown(await file.arrayBuffer());
+				md = await pdfToMarkdown(await f.arrayBuffer());
 			} else if (ext === "html" || ext === "htm") {
-				md = htmlToMarkdown(await file.text());
+				md = htmlToMarkdown(await f.text());
 			} else {
 				alert("Please upload PDF or HTML.");
 				return;
 			}
 			addMsg({ role: "system", content: "Markdown extracted." });
+
+			// sanitize
 			const { safeText, report } = guardDocumentForLLM(md);
 			if (report.is_suspicious) {
 				addMsg({ role: "system", content: `⚠️ Potential injection sanitized (score ${report.score}).` });
@@ -139,13 +160,12 @@ export default function App() {
 			setMarkdown(safeText);
 			addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
 			await validateEPD(safeText);
-			const obj = await extractJSON(safeText);
-			console.log("obj", obj);
+			await extractJSON(safeText);
 		} catch (e: any) {
 			alert(`Failed to extract: ${e?.message || e}`);
 		} finally {
 			setStatus("done");
-			console.log("Comleted processing file:", file.name);
+			console.log("Comleted processing file:", f.name);
 		}
 	};
 
@@ -160,15 +180,57 @@ export default function App() {
 		URL.revokeObjectURL(url);
 	};
 
-	return (
-		<div className="container">
-			<h1>parsEPD (Browser-only)</h1>
-			<p className="badge">No server. Files never leave the browser.</p>
+	const shikiAdapter = createShikiAdapter<HighlighterGeneric<any, any>>({
+		async load() {
+			const { createHighlighter } = await import("shiki");
+			return createHighlighter({
+				langs: ["tsx", "scss", "html", "bash", "json"],
+				themes: ["github-dark", "github-light"],
+			});
+		},
+	});
 
-			<section className="card row">
+	function safeStringify(value: unknown, space = 2) {
+		try {
+			return JSON.stringify(value, (_k, v) => (typeof v === "bigint" ? v.toString() : v), space);
+		} catch {
+			// fallback for circular structures (shouldn't happen if your JSON is valid)
+			return String(value);
+		}
+	}
+
+	const jsonString = React.useMemo(() => (jsonOut ? safeStringify(jsonOut, 2) : ""), [jsonOut]);
+	console.log(JSON.stringify(jsonOut, null, 2));
+	return (
+		<Container style={{ padding: "50px" }}>
+			<Text textStyle="4xl">parsEPD: Digitize Your EPDs</Text>
+			<br />
+			<Text textStyle="sm">
+				parsEPD converts an EPD from PDF or HTML format to a standardized, machine-readable JSON format (openEPD) using
+				a large language model (LLM) for the parsing and conversion. For details about the process, please see the
+				ParsEPD User Guide.
+			</Text>
+			<br />
+			<List.Root textStyle="sm">Steps to Use ParsEPD:</List.Root>
+			<List.Root>
+				<List.Item textStyle="sm">
+					Upload your PDF formatted EPD – ParsEPD automatically Watch as parsEPD validates that the
+				</List.Item>
+				<List.Item textStyle="sm">
+					PDF is an EPD, identifies, its product category, and then creates and displays the openEPD file.{" "}
+				</List.Item>
+				<List.Item textStyle="sm">View the openEPD file in the chat. </List.Item>
+				<List.Item textStyle="sm">Download the openEPD File using the “Download” button in the chat. </List.Item>
+				<List.Item textStyle="sm">
+					The user can remove or replace the EPD as well as start over using options provided in left hand column.{" "}
+				</List.Item>
+				<List.Item textStyle="sm">Only the most recent uploaded EPD is available for conversion.</List.Item>
+			</List.Root>
+			<br />
+			{/* <section className="card row">
 				<h3>LLM Settings</h3>
 				<div className="row row-3">
-					{/* <input
+					<input
 						placeholder="OpenAI-compatible Base URL (e.g., https://api.openai.com/v1)"
 						value={apiUrl}
 						onChange={(e) => setApiUrl(e.target.value)}
@@ -177,7 +239,7 @@ export default function App() {
 						placeholder="API Key (stored in localStorage)"
 						value={apiKey}
 						onChange={(e) => setApiKey(e.target.value)}
-					/> */}
+					/>
 					<label>Model</label>
 					<input
 						placeholder="Model (e.g., gpt-4o-mini)"
@@ -186,18 +248,34 @@ export default function App() {
 						disabled={true}
 					/>
 				</div>
-			</section>
-
+			</section> */}
 			<section className="card row">
-				<h3>Upload EPD (PDF or HTML)</h3>
-				<input
-					type="file"
-					accept=".pdf,.htm,.html"
-					onChange={(e) => e.target.files?.[0] && onFileChange(e.target.files[0])}
-				/>
-				{status && <div>Processing…</div>}
+				<Text textStyle={"lg"}>Upload EPD (PDF or HTML)</Text>
+				<FileUpload.Root
+					maxW="xl"
+					alignItems="stretch"
+					maxFiles={1}
+					maxFileSize={5 * 1024 * 1024} // 5MB
+					onFileChange={(uploads) => {
+						const files = uploads.acceptedFiles;
+						const list = Array?.isArray(files) ? files : Array?.from(files ?? []);
+						if (!list.length) return;
+						void onFileChange(list);
+					}}
+				>
+					<FileUpload.HiddenInput accept=".pdf,.htm,.html" />
+					<FileUpload.Dropzone>
+						<Icon size="md" color="fg.muted">
+							<LuUpload />
+						</Icon>
+						<FileUpload.DropzoneContent>
+							<Box>Drag and drop files here</Box>
+							<Box color="fg.muted">.htm, .html, .pdf up to 5MB</Box>
+						</FileUpload.DropzoneContent>
+					</FileUpload.Dropzone>
+					<FileUpload.List />
+				</FileUpload.Root>
 			</section>
-
 			{markdown && (
 				<section className="card">
 					<h3>Extracted Markdown (sanitized)</h3>
@@ -205,20 +283,18 @@ export default function App() {
 				</section>
 			)}
 
-			<section className="row" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-				<button className="card" onClick={downloadJSON} disabled={!jsonOut}>
-					Download JSON
-				</button>
-			</section>
-
-			{validation && (
-				<section className="card">
-					<strong>{validation}</strong>
-				</section>
-			)}
-
 			<section className="card">
-				<h3>Messages</h3>
+				<HStack>
+					<h3>Messages</h3>
+					{jsonOut && (
+						<section className="row" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+							<Button colorPalette="teal" variant="subtle" onClick={downloadJSON} disabled={!jsonOut}>
+								<LuArrowDownToLine /> Download JSON
+							</Button>
+						</section>
+					)}
+				</HStack>
+				{status !== "done" && status !== "idle" && <Spinner size="lg" />}
 				{messages.map((m, i) => (
 					<div
 						key={i}
@@ -233,6 +309,35 @@ export default function App() {
 					</div>
 				))}
 			</section>
-		</div>
+			{/* {(
+				<Collapsible.Root>
+					<Collapsible.Trigger>
+						<span style={{ fontWeight: 600 }}>View openEPD.json</span>
+					</Collapsible.Trigger>
+					<Collapsible.Content>
+						<CodeBlock.AdapterProvider value={shikiAdapter}>
+						<CodeBlock.Root code={typeof jsonString} language={"json"}>
+							<CodeBlock.Header>
+								<CodeBlock.Title>
+									<Icon color="orange.300" />
+									openEPD.json
+								</CodeBlock.Title>
+							</CodeBlock.Header>
+							<CodeBlock.Content>
+								<CodeBlock.Code>
+									<CodeBlock.CodeText />
+								</CodeBlock.Code>
+							</CodeBlock.Content>
+						</CodeBlock.Root>
+						</CodeBlock.AdapterProvider>
+					</Collapsible.Content>
+				</Collapsible.Root>
+			)} */}
+			{validation && (
+				<section className="card">
+					<strong>{validation}</strong>
+				</section>
+			)}
+		</Container>
 	);
 }

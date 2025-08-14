@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"target": "ES2022",
+		"target": "esnext",
 		"useDefineForClassFields": true,
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"module": "ESNext",
@@ -10,7 +10,10 @@
 		"allowSyntheticDefaultImports": true,
 		"jsx": "react-jsx",
 		"noEmit": true,
-		"strict": true
+		"strict": true,
+		"paths": {
+			"@/*": ["./src/*"]
+		}
 	},
 	"include": ["src"]
 }
