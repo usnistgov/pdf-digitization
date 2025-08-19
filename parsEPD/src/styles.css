@@ -6,12 +6,21 @@
 	--accent: #4f46e5;
 }
 
+@font-face {
+	font-family: "Roboto";
+	src: url(../fonts/roboto/Roboto-Regular.ttf) format("truetype");
+}
+@font-face {
+	font-family: "Audiowide";
+	src: url(../fonts/Audiowide-Regular.woff2) format("woff");
+}
+
 * {
 	box-sizing: border-box;
 }
 body {
 	margin: 0;
-	font-family: Inter, system-ui, Arial, sans-serif;
+	font-family: "Roboto", sans-serif;
 	background: var(--bg);
 	color: #111;
 }
