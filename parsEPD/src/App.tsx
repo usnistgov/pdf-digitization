@@ -1,22 +1,9 @@
-import {
-	Box,
-	Button,
-	CodeBlock,
-	Collapsible,
-	Container,
-	FileUpload,
-	HStack,
-	Icon,
-	List,
-	Spinner,
-	Text,
-	createShikiAdapter,
-} from "@chakra-ui/react";
+import { Box, Button, Container, FileUpload, HStack, Icon, List, Spinner, Text } from "@chakra-ui/react";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
+import { JsonEditor, githubLightTheme } from "json-edit-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { LuArrowDownToLine, LuUpload } from "react-icons/lu";
-import type { HighlighterGeneric } from "shiki";
 import "../public/nist-header-footer/nist-combined.css";
 import "../public/nist-header-footer/nist-header-footer-v-2.0.js";
 import { guardDocumentForLLM } from "./lib/guards";
@@ -159,7 +146,8 @@ export default function App() {
 			}
 			setMarkdown(safeText);
 			addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
-			await validateEPD(safeText);
+			const validity = await validateEPD(safeText);
+			addMsg({ role: "assistant", content: `EPD Validity Check: ${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
 			await extractJSON(safeText);
 		} catch (e: any) {
 			alert(`Failed to extract: ${e?.message || e}`);
@@ -180,29 +168,8 @@ export default function App() {
 		URL.revokeObjectURL(url);
 	};
 
-	const shikiAdapter = createShikiAdapter<HighlighterGeneric<any, any>>({
-		async load() {
-			const { createHighlighter } = await import("shiki");
-			return createHighlighter({
-				langs: ["tsx", "scss", "html", "bash", "json"],
-				themes: ["github-dark", "github-light"],
-			});
-		},
-	});
-
-	function safeStringify(value: unknown, space = 2) {
-		try {
-			return JSON.stringify(value, (_k, v) => (typeof v === "bigint" ? v.toString() : v), space);
-		} catch {
-			// fallback for circular structures (shouldn't happen if your JSON is valid)
-			return String(value);
-		}
-	}
-
-	const jsonString = React.useMemo(() => (jsonOut ? safeStringify(jsonOut, 2) : ""), [jsonOut]);
-	console.log(JSON.stringify(jsonOut, null, 2));
 	return (
-		<Container style={{ padding: "50px" }}>
+		<Container style={{ padding: "50px", minHeight: "73vh" }}>
 			<Text textStyle="4xl">parsEPD: Digitize Your EPDs</Text>
 			<br />
 			<Text textStyle="sm">
@@ -211,20 +178,18 @@ export default function App() {
 				ParsEPD User Guide.
 			</Text>
 			<br />
-			<List.Root textStyle="sm">Steps to Use ParsEPD:</List.Root>
+			<List.Root textStyle="md">Steps to Use ParsEPD:</List.Root>
 			<List.Root>
-				<List.Item textStyle="sm">
-					Upload your PDF formatted EPD – ParsEPD automatically Watch as parsEPD validates that the
+				<List.Item textStyle="md">
+					Upload your PDF formatted EPD – ParsEPD automatically Watch as parsEPD validates that the PDF is an EPD,
+					identifies, its product category, and then creates and displays the openEPD file.
 				</List.Item>
-				<List.Item textStyle="sm">
-					PDF is an EPD, identifies, its product category, and then creates and displays the openEPD file.{" "}
-				</List.Item>
-				<List.Item textStyle="sm">View the openEPD file in the chat. </List.Item>
-				<List.Item textStyle="sm">Download the openEPD File using the “Download” button in the chat. </List.Item>
-				<List.Item textStyle="sm">
+				<List.Item textStyle="md">View the openEPD file in the chat. </List.Item>
+				<List.Item textStyle="md">Download the openEPD File using the “Download” button in the chat. </List.Item>
+				<List.Item textStyle="md">
 					The user can remove or replace the EPD as well as start over using options provided in left hand column.{" "}
 				</List.Item>
-				<List.Item textStyle="sm">Only the most recent uploaded EPD is available for conversion.</List.Item>
+				<List.Item textStyle="md">Only the most recent uploaded EPD is available for conversion.</List.Item>
 			</List.Root>
 			<br />
 			{/* <section className="card row">
@@ -249,11 +214,12 @@ export default function App() {
 					/>
 				</div>
 			</section> */}
-			<section className="card row">
+			<Box>
 				<Text textStyle={"lg"}>Upload EPD (PDF or HTML)</Text>
 				<FileUpload.Root
-					maxW="xl"
-					alignItems="stretch"
+					p="5"
+					maxW="md"
+					alignItems="left"
 					maxFiles={1}
 					maxFileSize={5 * 1024 * 1024} // 5MB
 					onFileChange={(uploads) => {
@@ -264,18 +230,15 @@ export default function App() {
 					}}
 				>
 					<FileUpload.HiddenInput accept=".pdf,.htm,.html" />
-					<FileUpload.Dropzone>
-						<Icon size="md" color="fg.muted">
-							<LuUpload />
-						</Icon>
-						<FileUpload.DropzoneContent>
-							<Box>Drag and drop files here</Box>
-							<Box color="fg.muted">.htm, .html, .pdf up to 5MB</Box>
-						</FileUpload.DropzoneContent>
-					</FileUpload.Dropzone>
+					<FileUpload.Trigger asChild>
+						<Button variant="solid" size="lg">
+							<LuUpload /> Upload file
+						</Button>
+					</FileUpload.Trigger>
 					<FileUpload.List />
 				</FileUpload.Root>
-			</section>
+			</Box>
+
 			{markdown && (
 				<section className="card">
 					<h3>Extracted Markdown (sanitized)</h3>
@@ -283,56 +246,48 @@ export default function App() {
 				</section>
 			)}
 
-			<section className="card">
-				<HStack>
-					<h3>Messages</h3>
-					{jsonOut && (
-						<section className="row" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-							<Button colorPalette="teal" variant="subtle" onClick={downloadJSON} disabled={!jsonOut}>
-								<LuArrowDownToLine /> Download JSON
-							</Button>
-						</section>
-					)}
-				</HStack>
-				{status !== "done" && status !== "idle" && <Spinner size="lg" />}
-				{messages.map((m, i) => (
-					<div
-						key={i}
-						style={{
-							padding: 8,
-							margin: "6px 0",
-							background: m.role === "assistant" ? "#f7f7ff" : "#f7fff7",
-							borderRadius: 10,
-						}}
-					>
-						<strong>{m.role.toUpperCase()}:</strong> {m.content}
-					</div>
-				))}
-			</section>
-			{/* {(
-				<Collapsible.Root>
-					<Collapsible.Trigger>
-						<span style={{ fontWeight: 600 }}>View openEPD.json</span>
-					</Collapsible.Trigger>
-					<Collapsible.Content>
-						<CodeBlock.AdapterProvider value={shikiAdapter}>
-						<CodeBlock.Root code={typeof jsonString} language={"json"}>
-							<CodeBlock.Header>
-								<CodeBlock.Title>
-									<Icon color="orange.300" />
-									openEPD.json
-								</CodeBlock.Title>
-							</CodeBlock.Header>
-							<CodeBlock.Content>
-								<CodeBlock.Code>
-									<CodeBlock.CodeText />
-								</CodeBlock.Code>
-							</CodeBlock.Content>
-						</CodeBlock.Root>
-						</CodeBlock.AdapterProvider>
-					</Collapsible.Content>
-				</Collapsible.Root>
-			)} */}
+			{markdown && (
+				<section className="card">
+					<HStack>
+						<h3>Messages</h3>
+						{jsonOut && (
+							<section className="row" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+								<Button colorPalette="teal" variant="subtle" onClick={downloadJSON} disabled={!jsonOut}>
+									<LuArrowDownToLine /> Download JSON
+								</Button>
+							</section>
+						)}
+					</HStack>
+					{status !== "done" && status !== "idle" && <Spinner size="lg" />}
+					{messages.map((m, i) => (
+						<div
+							key={i}
+							style={{
+								padding: 8,
+								margin: "6px 0",
+								background: m.role === "assistant" ? "#f7f7ff" : "#f7fff7",
+								borderRadius: 10,
+							}}
+						>
+							<strong>{m.role.toUpperCase()}:</strong> {m.content}
+						</div>
+					))}
+				</section>
+			)}
+
+			{jsonOut && (
+				<JsonEditor
+					data={jsonOut}
+					restrictEdit={true}
+					restrictDelete={true}
+					restrictAdd={true}
+					viewOnly={true}
+					collapse={1}
+					rootName="openEPD"
+					theme={githubLightTheme}
+				/>
+			)}
+
 			{validation && (
 				<section className="card">
 					<strong>{validation}</strong>
