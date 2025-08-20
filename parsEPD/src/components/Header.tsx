@@ -1,23 +1,36 @@
-import { Box, Flex, Link } from "@chakra-ui/react";
-import { LuExternalLink } from "react-icons/lu";
-
-import React from "react";
-
+import { Highlight, List, Text } from "@chakra-ui/react";
 const Header = () => {
 	return (
-		<Box background="black" width="100%" padding={8} color="white">
-			<Flex gap="10" justifyContent={"flex-end"}>
-				<Link href="https://www.nist.gov" target="_blank" colorPalette="blue">
-					User Guide <LuExternalLink />
-				</Link>
-				<Link href="https://www.nist.gov" target="_blank" colorPalette="blue">
-					Github <LuExternalLink />
-				</Link>
-				<Link href="https://www.nist.gov" target="_blank" colorPalette="blue">
-					User Guide <LuExternalLink />
-				</Link>
-			</Flex>
-		</Box>
+		<>
+			<Text textStyle="6xl" fontWeight={800}>
+				parsEPD:{" "}
+				<Highlight query="Digitize" styles={{ color: "teal.600" }}>
+					Digitize Your EPDs
+				</Highlight>
+			</Text>
+			<br />
+			<Text textStyle="lg" fontWeight="semibold">
+				parsEPD converts an EPD from PDF or HTML format to a standardized, machine-readable JSON format (openEPD) using
+				a large language model (LLM) for the parsing and conversion. For details about the process, please see the
+				ParsEPD User Guide.
+			</Text>
+			<br />
+			<List.Root textStyle="lg" fontWeight="semibold">
+				Steps to Use ParsEPD:
+			</List.Root>
+			<List.Root fontWeight="semibold" textStyle="lg">
+				<List.Item textStyle="md">
+					Upload your PDF formatted EPD – ParsEPD automatically Watch as parsEPD validates that the PDF is an EPD,
+					identifies, its product category, and then creates and displays the openEPD file.
+				</List.Item>
+				<List.Item textStyle="md">View the openEPD file in the chat. </List.Item>
+				<List.Item textStyle="md">Download the openEPD File using the “Download” button in the chat. </List.Item>
+				<List.Item textStyle="md">
+					The user can remove or replace the EPD as well as start over using options provided in left hand column.{" "}
+				</List.Item>
+				<List.Item textStyle="md">Only the most recent uploaded EPD is available for conversion.</List.Item>
+			</List.Root>
+		</>
 	);
 };
 

@@ -22,55 +22,5 @@ body {
 	margin: 0;
 	font-family: "Roboto", sans-serif;
 	background: var(--bg);
-	color: #111;
-}
-
-.container {
-	max-width: 1100px;
-	margin: 24px auto;
-	padding: 0 16px;
-}
-.card {
-	background: var(--card);
-	border: 1px solid var(--border);
-	border-radius: 16px;
-	padding: 16px;
-}
-.row {
-	display: grid;
-	gap: 12px;
-}
-.row-3 {
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-h1 {
-	margin-top: 0;
-}
-input,
-textarea,
-select,
-button {
-	font: inherit;
-	padding: 10px 12px;
-}
-button {
-	border-radius: 10px;
-	border: 1px solid var(--border);
-	background: #fff;
-	cursor: pointer;
-}
-button.primary {
-	background: var(--accent);
-	color: #fff;
-	border-color: var(--accent);
-}
-section + section {
-	margin-top: 16px;
-}
-.badge {
-	font-size: 12px;
-	color: var(--muted);
-}
-pre {
-	white-space: pre-wrap;
+	color: #000;
 }
