@@ -2,7 +2,7 @@ import { Container } from "@chakra-ui/react";
 
 const Disclaimer = () => {
 	return (
-		<Container fluid style={{ backgroundColor: "#2e2e2e" }} p={10} color={"white"}>
+		<Container fluid style={{ backgroundColor: "#080808" }} p={10} color={"white"}>
 			This software was developed at the National Institute of Standards and Technology by employees of the Federal
 			Government in the course of their official duties. Pursuant to title 17 Section 105 of the United States Code this
 			software is not subject to copyright protection and is in the public domain. It is an experimental system. NIST
