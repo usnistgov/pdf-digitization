@@ -3,10 +3,10 @@ const Header = () => {
 	return (
 		<>
 			<Text textStyle="6xl" fontWeight={800}>
-				parsEPD:{" "}
-				<Highlight query="Digitize" styles={{ color: "teal.600" }}>
-					Digitize Your EPDs
+				<Highlight query="EPD" styles={{ color: "teal.600" }}>
+					parsEPD:&nbsp;
 				</Highlight>
+				Digitize Your EPDs
 			</Text>
 			<br />
 			<Text textStyle="lg" fontWeight="semibold">
