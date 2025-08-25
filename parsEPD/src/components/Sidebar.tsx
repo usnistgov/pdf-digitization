@@ -136,7 +136,7 @@ const Sidebar = ({
 				setIsEpdValid(validity);
 				setStatus(validity ? "extracting" : "error");
 				addMsg({ role: "assistant", content: `EPD Validity Check: ${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
-				await extractJSON(safeText);
+				if (validity) await extractJSON(safeText);
 				setStatus("done");
 			} catch (e: any) {
 				setStatus("error");
