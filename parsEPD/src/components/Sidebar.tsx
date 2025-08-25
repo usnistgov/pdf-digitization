@@ -159,14 +159,13 @@ const Sidebar = ({
 		<Container maxW={"20vw"} m={0} p={10}>
 			<Text textStyle="xl" fontWeight={800}>
 				<Stack direction="column">
-					<Image src="../../public/logo.png" htmlWidth={"150px"} />
-					Digitize Your EPDs
+					<Image src="../../public/logo.png" htmlWidth={"145px"} />
 				</Stack>
 			</Text>
 			<br />
 			<Text>
-				Please upload your Environmental Product Declaration (EPD) PDF file here. The system will extract and analyze
-				its content using AI.
+				Please upload your Environmental Product Declaration (EPD) files here. The system will extract and analyze its
+				content using AI.
 			</Text>
 			<br />
 			<FileUpload.Root
@@ -201,7 +200,7 @@ const Sidebar = ({
 				<Portal>
 					<Dialog.Backdrop />
 					<Dialog.Positioner>
-						<Dialog.Content>
+						<Dialog.Content style={{ color: "white" }}>
 							<Dialog.Header>
 								<Dialog.Title>Start Over</Dialog.Title>
 							</Dialog.Header>
