@@ -1,4 +1,4 @@
-export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+import { ChatMessage } from "./types";
 
 export async function chatCompletion(opts: {
 	apiUrl: string;

@@ -8,11 +8,11 @@ const Nav = () => {
 				<Link href="../../public/nist-header-footer/nist-combined.css" target="_blank">
 					User Guide <LuExternalLink />
 				</Link>
+				<Link href="https://www.nist.gov/programs-projects/building-system-economics" target="_blank">
+					Building System Economics Project <LuExternalLink />
+				</Link>
 				<Link href="https://github.com/usnistgov/pdf-digitization/" target="_blank">
 					Github <LuExternalLink />
-				</Link>
-				<Link href="https://www.nist.gov/programs-projects/building-system-economics" target="_blank">
-					Building System Economics <LuExternalLink />
 				</Link>
 			</Flex>
 		</Box>
