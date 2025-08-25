@@ -1,33 +1,11 @@
-import { Button, CloseButton, Container, Dialog, FileUpload, Portal, Text } from "@chakra-ui/react";
-import Ajv from "ajv";
+import { Button, CloseButton, Container, Dialog, FileUpload, Image, Portal, Stack, Text } from "@chakra-ui/react";
 import { useCallback, useState } from "react";
 import { LuRefreshCw, LuUpload } from "react-icons/lu";
 import { guardDocumentForLLM } from "../lib/guards";
-import { type ChatMessage, chatCompletion } from "../lib/llm";
+import { chatCompletion } from "../lib/llm";
 import { htmlToMarkdown, pdfToMarkdown } from "../lib/pdf";
 import { extraction_prompt_json, filecheck_prompt, system_prompt } from "../lib/prompts";
-
-type Status = "idle" | "extracting" | "sanitizing" | "validating_epd" | "extracting_json" | "done" | "error";
-
-type SidebarProps = {
-	// LLM config
-	apiUrl: string;
-	apiKey?: string;
-	model: string;
-
-	// State and setters (lifted into App)
-	status: Status;
-	setStatus: (s: Status) => void;
-	setMarkdown: (s: string) => void;
-	setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
-	setValidation: (s: string) => void;
-	setJsonOut: (v: any) => void;
-	addMsg: (m: ChatMessage) => void;
-
-	// Schema / validator
-	ajv: Ajv;
-	openEPDSchema: any;
-};
+import { SidebarProps } from "../lib/types";
 
 const Sidebar = ({
 	apiUrl,
@@ -36,6 +14,7 @@ const Sidebar = ({
 	status,
 	setStatus,
 	setMarkdown,
+	setIsEpdValid,
 	setMessages,
 	setValidation,
 	setJsonOut,
@@ -63,10 +42,10 @@ const Sidebar = ({
 			});
 			addMsg({ role: "assistant", content: `EPD Validity Check: ${reply}` });
 			const ok = /valid epd/i.test(reply);
-			if (!ok) throw new Error("EPD validity check failed.");
-			return true;
+			setStatus(ok ? "done" : "error");
+			return ok;
 		},
-		[apiKey, apiUrl, model, setStatus, addMsg],
+		[setStatus, addMsg, setIsEpdValid],
 	);
 
 	const extractJSON = useCallback(
@@ -74,48 +53,43 @@ const Sidebar = ({
 			console.log("extracting json...");
 			// if (!markdown) return;
 			setStatus("extracting_json");
-			try {
-				const reply = await chatCompletion({
-					apiUrl,
-					apiKey,
-					model,
-					messages: [
-						{ role: "system", content: extraction_prompt_json },
-						{ role: "user", content: `<EPD_Content>\n${safeText}\n</EPD_Content>` },
-					],
-				});
 
-				// Extract first {...}
-				const match = reply.match(/\{[\s\S]*\}/);
-				if (!match) throw new Error("No JSON object found in model output.");
-				const raw = match[0];
+			const reply = await chatCompletion({
+				apiUrl,
+				apiKey,
+				model,
+				messages: [
+					{ role: "system", content: extraction_prompt_json },
+					{ role: "user", content: `<EPD_Content>\n${safeText}\n</EPD_Content>` },
+				],
+			});
 
-				// Quick repair for common issues
-				const repaired = raw.replace(/"--,/g, '"--"').replace(/:\s*--(?=[,}])/g, ': "--"');
+			// Extract first {...}
+			const match = reply.match(/\{[\s\S]*\}/);
+			if (!match) throw new Error("No JSON object found in model output.");
+			const raw = match[0];
 
-				const obj = JSON.parse(repaired);
-				setJsonOut(obj);
-				addMsg({ role: "assistant", content: "✅ openEPD JSON generated." });
-				addMsg({ role: "assistant", content: "Validating openEPD schema." });
+			// Quick repair for common issues
+			const repaired = raw.replace(/"--,/g, '"--"').replace(/:\s*--(?=[,}])/g, ': "--"');
 
-				// Validate with YOUR schema object
-				const validate = ajv.compile(openEPDSchema as any);
-				const valid = validate(obj);
-				if (!valid) {
-					console.warn("Ajv errors:", validate.errors);
-					setValidation(`❌ Invalid JSON: ${validate.errors?.[0]?.message || "See console"}`);
-				} else {
-					setValidation("✅ JSON is valid according to the schema.");
-				}
+			const obj = JSON.parse(repaired);
+			setJsonOut(obj);
+			addMsg({ role: "assistant", content: "✅ openEPD JSON generated." });
+			addMsg({ role: "assistant", content: "Validating openEPD schema." });
 
-				setJsonOut(obj);
-				addMsg({ role: "assistant", content: "✅ openEPD JSON validated." });
-				addMsg({ role: "assistant", content: "✅ JSON is available for download." });
-			} catch (e: any) {
-				alert(e.message);
-			} finally {
-				setStatus("idle");
+			// Validate with YOUR schema object
+			const validate = ajv.compile(openEPDSchema as any);
+			const valid = validate(obj);
+			if (!valid) {
+				console.warn("Ajv errors:", validate.errors);
+				setValidation(`❌ Invalid JSON: ${validate.errors?.[0]?.message || "See console"}`);
+			} else {
+				setValidation("✅ JSON is valid according to the schema.");
 			}
+
+			setJsonOut(obj);
+			addMsg({ role: "assistant", content: "✅ openEPD JSON validated." });
+			addMsg({ role: "assistant", content: "✅ JSON is available for download." });
 		},
 		[apiUrl, apiKey, model, setStatus, setJsonOut, addMsg, ajv, openEPDSchema, setValidation],
 	);
@@ -133,6 +107,7 @@ const Sidebar = ({
 				setMessages([]);
 				setValidation("");
 				setJsonOut(null);
+				setIsEpdValid(null);
 
 				const ext = f.name.toLowerCase().split(".").pop();
 				let md = "";
@@ -158,16 +133,16 @@ const Sidebar = ({
 				addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
 
 				const validity = await validateEPD(safeText);
+				setIsEpdValid(validity);
+				setStatus(validity ? "extracting" : "error");
 				addMsg({ role: "assistant", content: `EPD Validity Check: ${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
 				await extractJSON(safeText);
-			} catch (e: any) {
-				alert(`Failed to extract: ${e?.message || e}`);
-			} finally {
 				setStatus("done");
-				console.log("Comleted processing file:", f.name);
+			} catch (e: any) {
+				setStatus("error");
 			}
 		},
-		[setStatus, setMarkdown, setMessages, setValidation, setJsonOut, addMsg, validateEPD, extractJSON],
+		[setStatus, setMarkdown, setMessages, setValidation, setJsonOut, addMsg, validateEPD, extractJSON, setIsEpdValid],
 	);
 
 	const onStartOver = useCallback(() => {
@@ -177,12 +152,16 @@ const Sidebar = ({
 		setMessages([]);
 		setJsonOut(null);
 		setValidation("");
+		setIsEpdValid(null);
 	}, [setStatus, setMarkdown, setMessages, setJsonOut, setValidation]);
 
 	return (
 		<Container maxW={"20vw"} m={0} p={10}>
-			<Text textStyle="2xl" fontWeight={800}>
-				parsEPD: Digitize your EPD
+			<Text textStyle="xl" fontWeight={800}>
+				<Stack direction="column">
+					<Image src="../../public/logo.png" htmlWidth={"150px"} />
+					Digitize Your EPDs
+				</Stack>
 			</Text>
 			<br />
 			<Text>
@@ -214,7 +193,7 @@ const Sidebar = ({
 			<br />
 			<Dialog.Root placement={"center"} motionPreset="slide-in-bottom" role="alertdialog">
 				<Dialog.Trigger asChild>
-					<Button variant="solid" size="lg" color={"teal"} m={0} disabled={status === "idle"}>
+					<Button variant="solid" size="lg" color={"teal"} m={0} disabled={!(status === "done" || status === "error")}>
 						<LuRefreshCw />
 						Start Over
 					</Button>

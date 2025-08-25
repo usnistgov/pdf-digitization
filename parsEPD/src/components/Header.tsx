@@ -1,12 +1,11 @@
-import { Highlight, List, Text } from "@chakra-ui/react";
+import { Image, List, Stack, Text } from "@chakra-ui/react";
 const Header = () => {
 	return (
 		<>
 			<Text textStyle="6xl" fontWeight={800}>
-				<Highlight query="EPD" styles={{ color: "teal.600" }}>
-					parsEPD:&nbsp;
-				</Highlight>
-				Digitize Your EPDs
+				<Stack direction="row" height={"75px"}>
+					<Image src="../../public/logo.png" />: Digitize Your EPDs
+				</Stack>
 			</Text>
 			<br />
 			<Text textStyle="lg" fontWeight="semibold">
