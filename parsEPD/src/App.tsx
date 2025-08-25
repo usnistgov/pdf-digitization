@@ -1,4 +1,17 @@
-import { Button, Container, Flex, HStack, ScrollArea, Spinner, Text, Theme } from "@chakra-ui/react";
+import {
+	Alert,
+	Box,
+	Button,
+	Center,
+	CloseButton,
+	Container,
+	Flex,
+	HStack,
+	ScrollArea,
+	Spinner,
+	Text,
+	Theme,
+} from "@chakra-ui/react";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import { JsonEditor, githubDarkTheme } from "json-edit-react";
@@ -10,10 +23,20 @@ import Header from "./components/Header";
 import Nav from "./components/Navigation";
 import Sidebar from "./components/Sidebar";
 
-import { type ChatMessage } from "./lib/llm";
+import { ChatMessage, Status } from "./lib/types";
 
 import openEPDSchema from "../../llm/openepd_validation_schema.json";
 import Disclaimer from "./components/Disclaimer";
+
+const status_text = {
+	extracting: "Extracting text from document...",
+	sanitizing: "Sanitizing extracted text...",
+	validating_epd: "Checking if document is a valid EPD...",
+	extracting_json: "Extracting JSON from EPD...",
+	done: "Done!",
+	error: "Error occurred. Please try again.",
+	idle: "Idle. Please upload a document.",
+};
 
 export default function App() {
 	// LLM Config
@@ -22,8 +45,9 @@ export default function App() {
 	const model = import.meta.env.VITE_MODEL;
 
 	// State sidebar will update
-	const [status, setStatus] = useState("idle");
-	const [markdown, setMarkdown] = useState("");
+	const [status, setStatus] = useState<Status>("idle");
+	const [isEpdValid, setIsEpdValid] = useState<boolean | null>(null);
+	const [markdown, setMarkdown] = useState<string>("");
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [jsonOut, setJsonOut] = useState<any>(null);
 	const [validation, setValidation] = useState<string>("");
@@ -74,32 +98,33 @@ export default function App() {
 						addMsg={addMsg}
 						ajv={ajv}
 						openEPDSchema={openEPDSchema as any}
+						setIsEpdValid={setIsEpdValid}
 					/>
-					<Container style={{ padding: "50px 150px", minHeight: "75vh", maxHeight: "75vh", overflowY: "scroll" }}>
+					<Container style={{ padding: "50px 150px", minHeight: "75vh", maxHeight: "75vh", overflowY: "auto" }}>
 						<Header />
 						<br />
 						{/* <Container >
-				<h3>LLM Settings</h3>
-				<div >
-					<input
-						placeholder="OpenAI-compatible Base URL (e.g., https://api.openai.com/v1)"
-						value={apiUrl}
-						onChange={(e) => setApiUrl(e.target.value)}
-					/>
-					<input
-						placeholder="API Key (stored in localStorage)"
-						value={apiKey}
-						onChange={(e) => setApiKey(e.target.value)}
-					/>
-					<label>Model</label>
-					<input
-						placeholder="Model (e.g., gpt-4o-mini)"
-						value={model}
-						onChange={(e) => setModel(e.target.value)}
-						disabled={true}
-					/>
-				</div>
-			</Container> */}
+							<h3>LLM Settings</h3>
+							<div >
+								<input
+									placeholder="OpenAI-compatible Base URL (e.g., https://api.openai.com/v1)"
+									value={apiUrl}
+									onChange={(e) => setApiUrl(e.target.value)}
+								/>
+								<input
+									placeholder="API Key (stored in localStorage)"
+									value={apiKey}
+									onChange={(e) => setApiKey(e.target.value)}
+								/>
+								<label>Model</label>
+								<input
+									placeholder="Model (e.g., gpt-4o-mini)"
+									value={model}
+									onChange={(e) => setModel(e.target.value)}
+									disabled={true}
+								/>
+							</div>
+						</Container> */}
 
 						{markdown && (
 							<Container p={5} style={{ border: "1px solid #2e2e2e", borderRadius: 10 }} mt={5} mb={5}>
@@ -119,6 +144,17 @@ export default function App() {
 
 						{markdown && (
 							<Container style={{ border: "1px solid #2e2e2e", borderRadius: 10 }} pt={3} pb={3} mb={3}>
+								{isEpdValid === false && (
+									<Alert.Root status="error" variant="solid">
+										<Alert.Indicator />
+										<Alert.Content>
+											<Alert.Title>Error</Alert.Title>
+											<Alert.Description>The file is not an EPD.</Alert.Description>
+										</Alert.Content>
+										<CloseButton pos="relative" top="-2" insetEnd="-2" />
+									</Alert.Root>
+								)}
+								<br />
 								<HStack>
 									<Text fontSize={"lg"} fontWeight={"semibold"}>
 										Messages
@@ -137,7 +173,13 @@ export default function App() {
 										</Flex>
 									)}
 								</HStack>
-								{status !== "done" && status !== "idle" && <Spinner size="lg" />}
+								{status !== "done" && (
+									<Box pos="absolute" inset="0" bg="bg/80">
+										<Center h="full">
+											<Spinner color="teal.500" size="xl" /> &nbsp; {status_text[status]}
+										</Center>
+									</Box>
+								)}
 								{messages.map((m, i) => (
 									<Text
 										key={i}
