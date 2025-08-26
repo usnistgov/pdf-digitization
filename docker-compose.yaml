@@ -1,25 +1,14 @@
 version: "3.9"
 services:
-  backend:
+  pdf-digitization:
+    image: node:14
     build:
-      context: ./llm
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
-    env_file:
-      - llm/.env
+      context: ./parsEPD
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://api.example.com
+      - REACT_APP_DEBUG=true
     volumes:
-      - ./llm:/app
-
-  frontend:
-    build:
-      context: ./llm
-    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
-    env_file:
-      - llm/.env
-    ports:
-      - "8501:8501"
-    depends_on:
-      - backend
-    volumes:
-      - ./llm:/app
+      - ./src:/app/src

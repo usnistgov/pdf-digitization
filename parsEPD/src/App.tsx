@@ -25,7 +25,7 @@ import Sidebar from "./components/Sidebar";
 
 import { ChatMessage, Status } from "./lib/types";
 
-import openEPDSchema from "../../llm/openepd_validation_schema.json";
+import openEPDSchema from "../src/lib/openepd_validation_schema.json";
 import Disclaimer from "./components/Disclaimer";
 
 const status_text = {
