@@ -4,7 +4,7 @@ const Header = () => {
 		<>
 			<Text textStyle="6xl" fontWeight={800}>
 				<Stack direction="row" height={"75px"}>
-					<Image src="../../public/logo.png" />: Digitize Your EPDs
+					<Image src={"/logo.png"} />: Digitize Your EPDs
 				</Stack>
 			</Text>
 			<br />
