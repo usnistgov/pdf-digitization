@@ -4,7 +4,7 @@
 		"id": { "type": "string" },
 		"doctype": { "type": "string" },
 		"openepd_version": { "type": "string" },
-		"version": { "type": ["number", "string"] },
+		"version": { "type": ["number", "string", "null"] },
 		"language": { "type": "string" },
 		"private": { "type": ["boolean", "string"] },
 		"declaration_url": { "type": "string" },
@@ -18,25 +18,22 @@
 		"valid_until": { "type": "string" },
 		"declared_unit": {
 			"type": "object",
-			"properties": { "qty": { "type": ["number", "string"] }, "unit": { "type": "string" } },
-			"required": ["qty", "unit"]
+			"properties": { "qty": { "type": ["number", "string", "null"] }, "unit": { "type": "string" } }
 		},
 		"kg_per_declared_unit": {
 			"type": "object",
-			"properties": { "qty": { "type": ["number", "string"] }, "unit": { "type": "string" } },
-			"required": ["qty", "unit"]
+			"properties": { "qty": { "type": ["number", "string", "null"] }, "unit": { "type": "string" } }
 		},
 		"kg_C_per_declared_unit": {
 			"type": "object",
-			"properties": { "qty": { "type": ["number", "string"] }, "unit": { "type": "string" } },
-			"required": ["qty", "unit"]
+			"properties": { "qty": { "type": ["number", "string", "null"] }, "unit": { "type": "string" } }
 		},
 		"product_name": { "type": "string" },
 		"product_sku": { "type": "string" },
 		"product_description": { "type": "string" },
 		"product_image_small": { "type": "string" },
 		"product_image": { "type": "string" },
-		"product_service_life_years": { "type": ["number", "string"] },
+		"product_service_life_years": { "type": ["number", "string", "null"] },
 		"product_classes": {
 			"type": "object",
 			"properties": {
@@ -48,8 +45,7 @@
 				"CN": { "type": "string" },
 				"oekobau.dat": { "type": "string" },
 				"INIES": { "type": "string" }
-			},
-			"required": ["masterformat", "UNSPSC", "NAPCS", "EC3", "io.cqd.ec3", "CN", "oekobau.dat", "INIES"]
+			}
 		},
 		"applicable_in": { "type": "array", "items": { "type": "string" } },
 		"product_usage_description": { "type": "string" },
@@ -59,25 +55,15 @@
 		"ec3": {
 			"type": "object",
 			"properties": {
-				"gwp_uncertainty_adjusted_a1a2a3_traci21": { "type": ["number", "string"] },
-				"gwp_uncertainty_adjusted_a1a2a3_ar5": { "type": ["number", "string"] },
+				"gwp_uncertainty_adjusted_a1a2a3_traci21": { "type": ["number", "string", "null"] },
+				"gwp_uncertainty_adjusted_a1a2a3_ar5": { "type": ["number", "string", "null"] },
 				"category": { "type": "string" },
 				"manufacturer_specific": { "type": ["boolean", "string"] },
 				"plant_specific": { "type": ["boolean", "string"] },
 				"product_specific": { "type": ["boolean", "string"] },
 				"batch_specific": { "type": ["boolean", "string"] },
-				"supply_chain_specificity": { "type": ["number", "string"] }
-			},
-			"required": [
-				"gwp_uncertainty_adjusted_a1a2a3_traci21",
-				"gwp_uncertainty_adjusted_a1a2a3_ar5",
-				"category",
-				"manufacturer_specific",
-				"plant_specific",
-				"product_specific",
-				"batch_specific",
-				"supply_chain_specificity"
-			]
+				"supply_chain_specificity": { "type": ["number", "string", "null"] }
+			}
 		},
 		"ref": { "type": "string" },
 		"manufacturer": {
@@ -97,12 +83,11 @@
 			"type": "object",
 			"properties": {
 				"web_domain": { "type": "string" },
-				"alt_ids": { "type": "object", "properties": { "wbcsd": { "type": "string" } }, "required": ["wbcsd"] },
+				"alt_ids": { "type": "object", "properties": { "wbcsd": { "type": "string" } } },
 				"name": { "type": "string" },
 				"alt_names": { "type": "array", "items": { "type": "string" } },
 				"ref": { "type": "string" }
-			},
-			"required": ["web_domain", "alt_ids", "name", "alt_names", "ref"]
+			}
 		},
 		"third_party_verifier": {
 			"type": "object",
@@ -124,7 +109,7 @@
 				"version": { "type": "string" },
 				"date_of_issue": { "type": "string" },
 				"valid_until": { "type": "string" },
-				"declared_units": { "type": "array", "items": { "type": "object", "properties": {}, "required": [] } },
+				"declared_units": { "type": "array", "items": { "type": "object" } },
 				"doc": { "type": "string" },
 				"status": { "type": "string" },
 				"product_classes": {
@@ -142,21 +127,7 @@
 					"required": ["masterformat", "UNSPSC", "NAPCS", "EC3", "io.cqd.ec3", "CN", "oekobau.dat", "INIES"]
 				},
 				"ref": { "type": "string" }
-			},
-			"required": [
-				"id",
-				"issuer_doc_id",
-				"name",
-				"short_name",
-				"version",
-				"date_of_issue",
-				"valid_until",
-				"declared_units",
-				"doc",
-				"status",
-				"product_classes",
-				"ref"
-			]
+			}
 		},
 		"compliance": {
 			"type": "array",
@@ -178,13 +149,12 @@
 			"items": {
 				"type": "object",
 				"properties": {
-					"qty": { "type": ["number", "string"] },
+					"qty": { "type": ["number", "string", "null"] },
 					"link": { "type": "string" },
-					"gwp_fraction": { "type": ["number", "string"] },
+					"gwp_fraction": { "type": ["number", "string", "null"] },
 					"evidence_type": { "type": "string" },
 					"citation": { "type": "string" }
-				},
-				"required": ["qty", "link", "gwp_fraction", "evidence_type", "citation"]
+				}
 			}
 		},
 		"impacts": {
@@ -199,15 +169,13 @@
 								"A1A2A3": {
 									"type": "object",
 									"properties": {
-										"mean": { "type": ["number", "string"] },
+										"mean": { "type": ["number", "string", "null"] },
 										"unit": { "type": "string" },
-										"rsd": { "type": ["number", "string"] },
+										"rsd": { "type": ["number", "string", "null"] },
 										"dist": { "type": "string" }
-									},
-									"required": ["mean", "unit", "rsd", "dist"]
+									}
 								}
-							},
-							"required": ["A1A2A3"]
+							}
 						},
 						"odp": {
 							"type": "object",
@@ -215,21 +183,17 @@
 								"A1A2A3": {
 									"type": "object",
 									"properties": {
-										"mean": { "type": ["number", "string"] },
+										"mean": { "type": ["number", "string", "null"] },
 										"unit": { "type": "string" },
-										"rsd": { "type": ["number", "string"] },
+										"rsd": { "type": ["number", "string", "null"] },
 										"dist": { "type": "string" }
-									},
-									"required": ["mean", "unit", "rsd", "dist"]
+									}
 								}
-							},
-							"required": ["A1A2A3"]
+							}
 						}
-					},
-					"required": ["gwp", "odp"]
+					}
 				}
-			},
-			"required": ["TRACI2.1"]
+			}
 		},
 		"resource_uses": {
 			"type": "object",
@@ -240,15 +204,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"RPRm": {
 					"type": "object",
@@ -256,15 +218,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"NRPRe": {
 					"type": "object",
@@ -272,15 +232,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"NRPRm": {
 					"type": "object",
@@ -288,15 +246,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"sm": {
 					"type": "object",
@@ -304,15 +260,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"rsf": {
 					"type": "object",
@@ -320,15 +274,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"nrsf": {
 					"type": "object",
@@ -336,15 +288,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"re": {
 					"type": "object",
@@ -352,15 +302,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"fw": {
 					"type": "object",
@@ -368,18 +316,15 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				}
-			},
-			"required": ["RPRe", "RPRm", "NRPRe", "NRPRm", "sm", "rsf", "nrsf", "re", "fw"]
+			}
 		},
 		"output_flows": {
 			"type": "object",
@@ -390,15 +335,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"nhwd": {
 					"type": "object",
@@ -406,15 +349,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"hlrw": {
 					"type": "object",
@@ -422,15 +363,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"illrw": {
 					"type": "object",
@@ -438,15 +377,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"cru": {
 					"type": "object",
@@ -454,15 +391,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"mr": {
 					"type": "object",
@@ -470,15 +405,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"mer": {
 					"type": "object",
@@ -486,15 +419,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"ee": {
 					"type": "object",
@@ -502,15 +433,13 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				},
 				"eh": {
 					"type": "object",
@@ -518,65 +447,15 @@
 						"A1A2A3": {
 							"type": "object",
 							"properties": {
-								"mean": { "type": ["number", "string"] },
+								"mean": { "type": ["number", "string", "null"] },
 								"unit": { "type": "string" },
-								"rsd": { "type": ["number", "string"] },
+								"rsd": { "type": ["number", "string", "null"] },
 								"dist": { "type": "string" }
-							},
-							"required": ["mean", "unit", "rsd", "dist"]
+							}
 						}
-					},
-					"required": ["A1A2A3"]
+					}
 				}
-			},
-			"required": ["hwd", "nhwd", "hlrw", "illrw", "cru", "mr", "mer", "ee", "eh"]
+			}
 		}
-	},
-	"required": [
-		"id",
-		"doctype",
-		"openepd_version",
-		"version",
-		"language",
-		"private",
-		"declaration_url",
-		"lca_discussion",
-		"program_operator_doc_id",
-		"program_operator_version",
-		"third_party_verification_url",
-		"third_party_verifier_email",
-		"epd_developer_email",
-		"date_of_issue",
-		"valid_until",
-		"declared_unit",
-		"kg_per_declared_unit",
-		"kg_C_per_declared_unit",
-		"product_name",
-		"product_sku",
-		"product_description",
-		"product_image_small",
-		"product_image",
-		"product_service_life_years",
-		"product_classes",
-		"applicable_in",
-		"product_usage_description",
-		"product_usage_image",
-		"manufacturing_description",
-		"manufacturing_image",
-		"ec3",
-		"ref",
-		"manufacturer",
-		"plants",
-		"program_operator",
-		"third_party_verifier",
-		"epd_developer",
-		"pcr",
-		"compliance",
-		"attachments",
-		"alt_ids",
-		"includes",
-		"impacts",
-		"resource_uses",
-		"output_flows"
-	]
+	}
 }

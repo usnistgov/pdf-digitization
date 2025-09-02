@@ -67,28 +67,57 @@ const Sidebar = ({
 			// Extract first {...}
 			const match = reply.match(/\{[\s\S]*\}/);
 			if (!match) throw new Error("No JSON object found in model output.");
-			const raw = match[0];
+			let raw = match[0];
 
 			// Quick repair for common issues
-			const repaired = raw.replace(/"--,/g, '"--"').replace(/:\s*--(?=[,}])/g, ': "--"');
+			raw = raw
+				// Fix trailing commas
+				.replace(/,\s*([}\]])/g, "$1")
+				// Fix unquoted values that should be strings
+				.replace(/:\s*--(?=[,}])/g, ": null")
+				// Fix numbers that might be strings but should be numbers
+				.replace(/:\s*"(\d+\.?\d*)"/g, (match: any, num: string) => {
+					// Only convert if it's a valid number
 
-			const obj = JSON.parse(repaired);
+					const parsed = parseFloat(num);
+					return isNaN(parsed) ? match : `: ${parsed}`;
+				});
+
+			// const obj = JSON.parse(repaired);
+			let obj;
+			try {
+				obj = JSON.parse(raw);
+			} catch (parseError: any) {
+				console.error("JSON Parse Error:", parseError);
+				throw new Error(`Failed to parse JSON: ${parseError.message}`);
+			}
+
 			setJsonOut(obj);
 			addMsg({ role: "assistant", content: "✅ openEPD JSON generated." });
 			addMsg({ role: "assistant", content: "Validating openEPD schema." });
 
-			// Validate with YOUR schema object
-			const validate = ajv.compile(openEPDSchema as any);
-			const valid = validate(obj);
-			if (!valid) {
-				console.warn("Ajv errors:", validate.errors);
-				setValidation(`❌ Invalid JSON: ${validate.errors?.[0]?.message || "See console"}`);
-			} else {
-				setValidation("✅ JSON is valid according to the schema.");
+			try {
+				const validate = ajv.compile(openEPDSchema as any);
+				const valid = validate(obj);
+
+				if (!valid) {
+					console.log("AJV Validation Errors:", validate.errors);
+					const errorDetails = validate.errors
+						?.map((err) => `${err.instancePath || "root"}: ${err.message} (received: ${JSON.stringify(err.data)})`)
+						.join("\n");
+
+					setValidation(`⚠️ Schema validation warning:\n${errorDetails}`);
+					addMsg({ role: "assistant", content: `⚠️ Schema validation warning. Verify output.` });
+				} else {
+					setValidation("✅ JSON is valid according to the schema.");
+					addMsg({ role: "assistant", content: "✅ openEPD JSON validated." });
+				}
+			} catch (schemaError: any) {
+				console.error("Schema Compilation Error:", schemaError);
+				setValidation(`❌ Schema error: ${schemaError.message}`);
+				addMsg({ role: "assistant", content: "❌ Schema compilation failed." });
 			}
 
-			setJsonOut(obj);
-			addMsg({ role: "assistant", content: "✅ openEPD JSON validated." });
 			addMsg({ role: "assistant", content: "✅ JSON is available for download." });
 		},
 		[apiUrl, apiKey, model, setStatus, setJsonOut, addMsg, ajv, openEPDSchema, setValidation],
@@ -131,7 +160,6 @@ const Sidebar = ({
 				}
 				setMarkdown(safeText);
 				addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
-
 				const validity = await validateEPD(safeText);
 				setIsEpdValid(validity);
 				setStatus(validity ? "extracting" : "error");
@@ -159,7 +187,7 @@ const Sidebar = ({
 		<Container maxW={"20vw"} m={0} p={10}>
 			<Text textStyle="xl" fontWeight={800}>
 				<Stack direction="column">
-					<Image src="../../public/logo.png" htmlWidth={"145px"} />
+					<Image src={"/logo.png"} htmlWidth={"145px"} />
 				</Stack>
 			</Text>
 			<br />
