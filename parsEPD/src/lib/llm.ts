@@ -5,17 +5,18 @@ export async function chatCompletion(opts: {
 	apiKey?: string;
 	model: string;
 	messages: ChatMessage[];
-	temperature?: number;
+	temperature: number;
 	max_tokens?: number;
+	top_p: number;
 }) {
-	const { apiUrl, apiKey, model, messages, temperature = 0, max_tokens = 4096 } = opts;
+	const { apiUrl, apiKey, model, messages, temperature = 0, max_tokens = 4096, top_p = 1 } = opts;
 	const res = await fetch(`${apiUrl.replace(/\/+$/, "")}/chat/completions`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
 			...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
 		},
-		body: JSON.stringify({ model, messages, temperature, max_tokens, stream: false }),
+		body: JSON.stringify({ model, messages, temperature, max_tokens, stream: false, top_p }),
 	});
 	if (!res.ok) {
 		const text = await res.text();
