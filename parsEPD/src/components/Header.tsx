@@ -2,11 +2,13 @@ import { Image, List, Stack, Text } from "@chakra-ui/react";
 const Header = () => {
 	return (
 		<>
-			<Text textStyle="6xl" fontWeight={800}>
-				<Stack direction="row" height={"75px"}>
-					<Image src={"/logo.png"} />: Digitize Your EPDs
-				</Stack>
-			</Text>
+			<Stack direction={"row"}>
+				<Image src={"/logo.png"} height="80px" width="100" alt="parsEPD logo" />
+				<Text textStyle="6xl" fontWeight={800}>
+					: Digitize Your EPDs
+				</Text>
+			</Stack>
+
 			<br />
 			<Text textStyle="lg" fontWeight="semibold">
 				parsEPD converts an EPD from PDF or HTML format to a standardized, machine-readable JSON format (openEPD) using

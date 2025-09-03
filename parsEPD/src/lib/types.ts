@@ -18,6 +18,8 @@ export type SidebarProps = {
 	setJsonOut: (v: any) => void;
 	addMsg: (m: ChatMessage) => void;
 	setIsEpdValid: (e: any) => void;
+	downloadJSON: () => void;
+	jsonOut: any;
 
 	// Schema / validator
 	ajv: Ajv;

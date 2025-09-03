@@ -99,6 +99,8 @@ export default function App() {
 						ajv={ajv}
 						openEPDSchema={openEPDSchema as any}
 						setIsEpdValid={setIsEpdValid}
+						jsonOut={jsonOut}
+						downloadJSON={downloadJSON}
 					/>
 					<Container style={{ padding: "50px 150px", minHeight: "75vh", maxHeight: "75vh", overflowY: "auto" }}>
 						<Header />
@@ -161,13 +163,7 @@ export default function App() {
 									</Text>
 									{jsonOut && (
 										<Flex justifyContent="flex-end" flexGrow={1}>
-											<Button
-												color="teal"
-												variant="outline"
-												onClick={downloadJSON}
-												disabled={!jsonOut}
-												// style={{ backgroundColor: "#000", border: "1px solid #2e2e2e" }}
-											>
+											<Button color="teal" variant="solid" onClick={downloadJSON} disabled={!jsonOut}>
 												<LuArrowDownToLine /> Download JSON
 											</Button>
 										</Flex>
