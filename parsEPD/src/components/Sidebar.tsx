@@ -36,6 +36,8 @@ const Sidebar = ({
 				apiUrl,
 				apiKey,
 				model,
+				temperature: 0,
+				top_p: 1,
 				messages: [
 					{ role: "system", content: system_prompt },
 					{ role: "system", content: filecheck_prompt },
@@ -60,6 +62,8 @@ const Sidebar = ({
 				apiUrl,
 				apiKey,
 				model,
+				temperature: 0,
+				top_p: 1,
 				messages: [
 					{ role: "system", content: extraction_prompt_json },
 					{ role: "user", content: `<EPD_Content>\n${safeText}\n</EPD_Content>` },
@@ -188,7 +192,7 @@ const Sidebar = ({
 	return (
 		<Container maxW={"20vw"} m={0} p={10}>
 			<Stack direction="column">
-				<Image src={"/logo.png"} htmlWidth={"145px"} alt="parsEPD logo" />
+				<Image src={"/logo.png"} htmlWidth={"264px"} alt="parsEPD logo" />
 			</Stack>
 
 			<Text mt={5}>
