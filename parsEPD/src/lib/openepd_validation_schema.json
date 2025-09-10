@@ -2,15 +2,15 @@
 	"type": "object",
 	"properties": {
 		"id": { "type": "string" },
-		"doctype": { "type": "string" },
-		"openepd_version": { "type": "string" },
+		"doctype": { "type": "string", "default": "OpenEPD" },
+		"openepd_version": { "type": "string", "default": "0.1" },
 		"version": { "type": ["number", "string", "null"] },
-		"language": { "type": "string" },
+		"language": { "type": "string", "default": "en" },
 		"private": { "type": ["boolean", "string"] },
 		"declaration_url": { "type": "string" },
 		"lca_discussion": { "type": "string" },
 		"program_operator_doc_id": { "type": "string" },
-		"program_operator_version": { "type": "string" },
+		"program_operator_version": { "type": ["string", "number"] },
 		"third_party_verification_url": { "type": "string" },
 		"third_party_verifier_email": { "type": "string" },
 		"epd_developer_email": { "type": "string" },
@@ -106,7 +106,7 @@
 				"issuer_doc_id": { "type": "string" },
 				"name": { "type": "string" },
 				"short_name": { "type": "string" },
-				"version": { "type": "string" },
+				"version": { "type": ["string", "number"] },
 				"date_of_issue": { "type": "string" },
 				"valid_until": { "type": "string" },
 				"declared_units": { "type": "array", "items": { "type": "object" } },
@@ -143,7 +143,7 @@
 			}
 		},
 		"attachments": { "type": "object", "properties": { "datasheet": { "type": "string" } }, "required": ["datasheet"] },
-		"alt_ids": { "type": "object", "properties": { "wbcsd": { "type": "string" } }, "required": ["wbcsd"] },
+		"alt_ids": { "type": "object", "properties": { "wbcsd": { "type": "string" } } },
 		"includes": {
 			"type": "array",
 			"items": {
