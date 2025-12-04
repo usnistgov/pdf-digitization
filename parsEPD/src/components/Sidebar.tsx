@@ -1,10 +1,11 @@
 import { Button, CloseButton, Container, Dialog, FileUpload, Flex, Image, Portal, Stack, Text } from "@chakra-ui/react";
 import { useCallback, useState } from "react";
 import { LuArrowDownToLine, LuRefreshCw, LuUpload } from "react-icons/lu";
-import { guardDocumentForLLM } from "../lib/guards";
+import { fixIncompleteJSON, guardDocumentForLLM } from "../lib/guards";
 import { chatCompletion } from "../lib/llm";
 import { htmlToMarkdown, pdfToMarkdown } from "../lib/pdf";
-import { extraction_prompt_json, filecheck_prompt, system_prompt } from "../lib/prompts";
+import { category_prompt, extraction_prompt_json, filecheck_prompt, system_prompt } from "../lib/prompts";
+import specs from "../lib/specs";
 import { SidebarProps } from "../lib/types";
 
 const Sidebar = ({
@@ -26,25 +27,31 @@ const Sidebar = ({
 }: SidebarProps) => {
 	const [uploadKey, setUploadKey] = useState(0);
 
+	const callLLM = async (systemPrompt: string[], userPrompt: string): Promise<string> => {
+		const instructions = systemPrompt.map((prompt) => {
+			return { role: "system", content: prompt };
+		});
+		const res = await chatCompletion({
+			//@ts-ignore
+			apiUrl,
+			apiKey,
+			model,
+			temperature: 0,
+			top_p: 1,
+			//@ts-ignore
+			messages: [...instructions, { role: "user", content: userPrompt }],
+		});
+		return res;
+	};
+
 	const validateEPD = useCallback(
 		async (safeText: string) => {
 			console.log("Validating EPD...");
 
 			setStatus("validating_epd");
 
-			const reply = await chatCompletion({
-				apiUrl,
-				apiKey,
-				model,
-				temperature: 0,
-				top_p: 1,
-				messages: [
-					{ role: "system", content: system_prompt },
-					{ role: "system", content: filecheck_prompt },
-					{ role: "user", content: safeText },
-				],
-			});
-			addMsg({ role: "assistant", content: `EPD Validity Check: ${reply}` });
+			const reply = await callLLM([system_prompt, filecheck_prompt], safeText);
+
 			const ok = /valid epd/i.test(reply);
 			setStatus(ok ? "done" : "error");
 			return ok;
@@ -52,45 +59,61 @@ const Sidebar = ({
 		[setStatus, addMsg, setIsEpdValid],
 	);
 
-	const extractJSON = useCallback(
+	const identifyPC = useCallback(
 		async (safeText: string) => {
+			console.log("Identifying product category...");
+
+			setStatus("extracting");
+
+			const reply = await callLLM([system_prompt, category_prompt], safeText);
+			console.log(reply);
+			addMsg({ role: "assistant", content: `Product Category: ${reply}` });
+			setStatus("done");
+			return reply;
+		},
+		[setStatus, addMsg, setIsEpdValid],
+	);
+
+	const identify_specs = (product_category: string) => {
+		product_category = product_category?.toLowerCase();
+		if (product_category === "asphalt" || product_category === "asphalt mixtures") {
+			product_category = "asphalt";
+		}
+		//@ts-ignore
+		return specs[product_category?.toLowerCase()];
+	};
+
+	const extractJSON = useCallback(
+		async (safeText: string, specs: string) => {
 			console.log("extracting json...");
 			// if (!markdown) return;
 			setStatus("extracting_json");
 
-			const reply = await chatCompletion({
-				apiUrl,
-				apiKey,
-				model,
-				temperature: 0,
-				top_p: 1,
-				messages: [
-					{ role: "system", content: extraction_prompt_json },
-					{ role: "user", content: `<EPD_Content>\n${safeText}\n</EPD_Content>` },
-				],
-			});
+			const reply = await callLLM([extraction_prompt_json(specs)], `<EPD_Content>\n${safeText}\n</EPD_Content>`);
+			let fixedReply = fixIncompleteJSON(reply);
 
 			// Extract first {...}
-			const match = reply.match(/\{[\s\S]*\}/);
+			const match = fixedReply.match(/\{[\s\S]*\}/);
 			if (!match) throw new Error("No JSON object found in model output.");
 			let raw = match[0];
 
 			// Quick repair for common issues
-			raw = raw
-				// Fix trailing commas
-				.replace(/,\s*([}\]])/g, "$1")
-				// Fix unquoted values that should be strings
-				.replace(/:\s*--(?=[,}])/g, ": null")
-				// Fix numbers that might be strings but should be numbers
-				.replace(/:\s*"(\d+\.?\d*)"/g, (match: any, num: string) => {
-					// Only convert if it's a valid number
+			// raw = raw
+			// 	// Fix trailing commas
+			// 	.replace(/,\s*([}\]])/g, "$1")
+			// 	// Fix unquoted values that should be strings
+			// 	.replace(/:\s*--(?=[,}])/g, ": null")
+			// 	// Fix numbers that might be strings but should be numbers
+			// 	.replace(/:\s*"(\d+\.?\d*)"/g, (match: any, num: string) => {
+			// 		// Only convert if it's a valid number
 
-					const parsed = parseFloat(num);
-					return isNaN(parsed) ? match : `: ${parsed}`;
-				});
+			// 		const parsed = parseFloat(num);
+			// 		return isNaN(parsed) ? match : `: ${parsed}`;
+			// 	});
 
 			// const obj = JSON.parse(repaired);
 			let obj;
+
 			try {
 				obj = JSON.parse(raw);
 			} catch (parseError: any) {
@@ -165,12 +188,18 @@ const Sidebar = ({
 					console.info("Injection report:", report);
 				}
 				setMarkdown(safeText);
+
 				addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
+
 				const validity = await validateEPD(safeText);
 				setIsEpdValid(validity);
 				setStatus(validity ? "extracting" : "error");
-				addMsg({ role: "assistant", content: `EPD Validity Check: ${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
-				if (validity) await extractJSON(safeText);
+				addMsg({ role: "assistant", content: `${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
+				if (validity) {
+					const product_category = await identifyPC(safeText);
+					const specs = await identify_specs(product_category);
+					await extractJSON(safeText, specs);
+				}
 				setStatus("done");
 			} catch (e: any) {
 				setStatus("error");
