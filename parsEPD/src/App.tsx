@@ -9,6 +9,7 @@ import {
 	HStack,
 	ScrollArea,
 	Spinner,
+	Tabs,
 	Text,
 	Theme,
 } from "@chakra-ui/react";
@@ -29,7 +30,7 @@ import openEPDSchema from "../src/lib/openepd_validation_schema.json";
 import Disclaimer from "./components/Disclaimer";
 
 const status_text = {
-	extracting: "Extracting text from document...",
+	extracting: "Extracting text from EPD...",
 	sanitizing: "Sanitizing extracted text...",
 	validating_epd: "Checking if document is a valid EPD...",
 	extracting_json: "Extracting JSON from EPD...",
@@ -197,7 +198,35 @@ export default function App() {
 							</Container>
 						)}
 
-						{jsonOut && (
+						{jsonOut && Array.isArray(jsonOut) && (
+							<Tabs.Root mt={5}>
+								<Tabs.List>
+									{jsonOut.map((_, index) => (
+										<Tabs.Trigger key={index} value={index.toString()}>
+											Item {index + 1}
+										</Tabs.Trigger>
+									))}
+								</Tabs.List>
+								{jsonOut.map((item, index) => (
+									<Tabs.Content key={index} value={index.toString()}>
+										{/* <pre>{JSON.stringify(item, null, 2)}</pre> */}
+										<JsonEditor
+											data={item}
+											restrictEdit={true}
+											restrictDelete={true}
+											restrictAdd={true}
+											viewOnly={true}
+											collapse={1}
+											rootName="openEPD"
+											theme={githubDarkTheme}
+											maxWidth={"100%"}
+											defaultValue={1}
+										/>
+									</Tabs.Content>
+								))}
+							</Tabs.Root>
+						)}
+						{/* {jsonOut && (
 							<JsonEditor
 								data={jsonOut}
 								restrictEdit={true}
@@ -209,7 +238,7 @@ export default function App() {
 								theme={githubDarkTheme}
 								maxWidth={"100%"}
 							/>
-						)}
+						)} */}
 
 						{validation && (
 							<Container border={"1px"} borderColor={"gray.200"} borderRadius={10} mt={5}>

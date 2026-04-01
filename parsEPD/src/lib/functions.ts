@@ -96,7 +96,7 @@ export const extractJSON = async (
 		throw new Error(`Failed to parse JSON: ${parseError.message}`);
 	}
 
-	callbacks.setJsonOut(obj);
+	callbacks.setJsonOut([obj]);
 	callbacks.addMsg({ role: "assistant", content: "✅ openEPD JSON generated." });
 	callbacks.addMsg({ role: "assistant", content: "Validating openEPD schema." });
 
