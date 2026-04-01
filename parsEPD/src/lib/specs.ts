@@ -1,11 +1,13 @@
 const specs = {
-	asphalt: `{
+	asphalt: `Asphalt:{
       "ext_version": "1.0",
       "ext": {
         "us_epa": {
           "ext_version": "",
           "binder_pg_high_suffix": null,
           "binder_pg_low_suffix": null,
+          "binder_pg_high":"",
+          "binder_pg_low":"",
           "production_temp_high": "",
           "production_temp_low": "",
           "plant_location_type": "",
@@ -40,7 +42,7 @@ const specs = {
             {
               "component": "",
               "material": "",
-              "has_data_gap": ,
+              "has_data_gap":false ,
               "weight_pct": ""
             },
             {
@@ -53,17 +55,17 @@ const specs = {
         }
       },
       "aggregate_size_max": "",
-      "rap": ,
-      "ras": ,
       "max_temperature": "",
       "min_temperature": "",
       "mix_type": "WMA",
       "gradation": "",
+      "rap": ,
+      "ras": ,
       "sbr": ,
       "sbs": ,
       "ppa": ,
       "gtr": ,
-      "pmb": 
+      "pmb": ,
     }`,
 	cement: `cementitious: {
       opc: 0.0, //0.123,
@@ -72,9 +74,9 @@ const specs = {
       flyAsh: 0.0, //0.045,
       siFume: 0.0, //0.045,
       gg45: 0.0, //0.045,
-      natPoz: 0.0, //0.045,
+      natPoz: 0.0, //this could also be specified as natural pozzolan(s),
       mk: 0.0, //0.045,
-      CaCO3: 0.0, //0.045,
+      CaCO3: 0.0, // this could also be specified as limestone
       other: 0.0, //0.045,
     },
     astm_prescriptive: "", //"Type I (C150)",
@@ -203,3 +205,67 @@ export default specs;
 //     },
 //   },
 // };
+
+//"us_epa":{
+//     "allocation_approach_disc": "",
+//     "background_reporting_period_start": null,
+//     "batch_specific": false,
+//     "certificate_commitment_pledge_end": null,
+//     "certificate_commitment_verification_link": null,
+//     "comparability_statement": "",
+//     "contains_regulated_hazardous_substance": true,
+//     "dangerous_substance_release": true,
+//     "dangerous_substance_released_list": [],
+//     "data_collection_method_disc": "",
+//     "eac_claims_verification_end_date": null,
+//     "eac_claims_verifier": null,
+//     "eac_claims_verifier_email": null,
+//     "energy_attribute_fraction": 0,
+//     "energy_attribute_power_types": null,
+//     "eol_modeling_approach_disc": "",
+//     "epa_human_readable_id": "",
+//     "epd_generator": {
+//         "link": "",
+//         "name": "",
+//         "owner": {
+//             "web_domain": ""
+//         },
+//         "primary_function": "",
+//         "uuid": "",
+//         "version": ""
+//     },
+//     "ext_version": "",
+//     "grid_granularity": "",
+//     "grid_mix_accounting": "",
+//     "hazardous_substance_included_list": [],
+//     "hazardous_substance_standards": "",
+//     "lca_software": {
+//         "link": "",
+//         "name": "",
+//         "owner": {
+//             "web_domain": ""
+//         },
+//         "primary_function": "",
+//         "uuid": "",
+//         "version": ""
+//     },
+//     "lca_system_boundary_disc": "",
+//     "lci_cutoff_criteria_disc": "",
+//     "lci_databases": [
+//         {
+//             "link": "",
+//             "name": "",
+//             "owner": {
+//                 "web_domain": ""
+//             },
+//             "uuid": "",
+//             "version": ""
+//         }
+//     ],
+//     "manufacturer_specific": true,
+//     "plant_specific": true,
+//     "primary_reporting_period_end": "",
+//     "primary_reporting_period_start": "",
+//     "product_specific": true,
+//     "supply_chain_specificity": null
+// }
