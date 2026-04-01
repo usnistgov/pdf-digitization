@@ -20,6 +20,12 @@
 		"output_flows"
 	],
 	"properties": {
+		"ec3": {
+			"category": { "type": "string" },
+			"manufacturer_specific": { "type": "boolean" },
+			"plant_specific": { "type": "boolean" },
+			"product_specific": { "type": "boolean" }
+		},
 		"doctype": { "type": "string" },
 		"openepd_version": { "type": "string" },
 		"id": { "type": "string" },
