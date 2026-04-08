@@ -21,7 +21,6 @@ import { SidebarProps } from "../lib/types";
 
 const Sidebar = ({
 	apiUrl,
-	apiKey,
 	status,
 	setStatus,
 	setMarkdown,
@@ -38,7 +37,7 @@ const Sidebar = ({
 	const [uploadKey, setUploadKey] = useState(0);
 	const [selectedModel, setSelectedModel] = useState<string[]>(["Llama-4-Maverick-17B-128E-Instruct-FP8"]);
 
-	const llmParams = { apiUrl, apiKey };
+	const llmParams = { apiUrl };
 
 	const onFileChange = useCallback(
 		async (model: string, files: File[]) => {

@@ -6,7 +6,6 @@ export type ChatMessage = { role: "system" | "user" | "assistant"; content: stri
 export type SidebarProps = {
 	// LLM config
 	apiUrl: string;
-	apiKey?: string;
 
 	// State and setters (lifted into App)
 	status: Status;

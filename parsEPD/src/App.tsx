@@ -41,8 +41,7 @@ const status_text = {
 
 export default function App() {
 	// LLM Config
-	const apiUrl = import.meta.env.VITE_LLM_URL;
-	const apiKey = import.meta.env.VITE_RCHAT_API_KEY;
+	const apiUrl = import.meta.env.VITE_API_URL;
 
 	// State sidebar will update
 	const [status, setStatus] = useState<Status>("idle");
@@ -54,8 +53,7 @@ export default function App() {
 
 	useEffect(() => {
 		localStorage.setItem("pars_api_url", apiUrl);
-		localStorage.setItem("pars_api_key", apiKey);
-	}, [apiUrl, apiKey]);
+	}, [apiUrl]);
 
 	const ajv = useMemo(() => {
 		const a = new Ajv({ allErrors: true, strict: false });
@@ -85,7 +83,6 @@ export default function App() {
 				<Flex>
 					<Sidebar // config
 						apiUrl={apiUrl}
-						apiKey={apiKey}
 						// state + setters that the sidebar pipeline will update
 						status={status}
 						setStatus={setStatus}

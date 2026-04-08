@@ -5,7 +5,6 @@ import specs from "./specs";
 
 interface CallLLMParams {
 	apiUrl: string;
-	apiKey?: string;
 	model: string;
 }
 
@@ -22,7 +21,6 @@ const callLLM = async (
 	if (model !== "gemini-2.5-pro") {
 		res = await chatCompletion({
 			apiUrl: params.apiUrl,
-			apiKey: params.apiKey,
 			model: params.model,
 			temperature: 0,
 			top_p: 1,
