@@ -1,4 +1,17 @@
-import { Button, CloseButton, Container, Dialog, FileUpload, Flex, Image, Portal, Stack, Text } from "@chakra-ui/react";
+import {
+	Button,
+	CloseButton,
+	Container,
+	Dialog,
+	FileUpload,
+	Flex,
+	Image,
+	Portal,
+	Select,
+	Stack,
+	Text,
+	createListCollection,
+} from "@chakra-ui/react";
 import { useCallback, useState } from "react";
 import { LuArrowDownToLine, LuRefreshCw, LuUpload } from "react-icons/lu";
 import { extractJSON, identifyPC, identifyProductNumbers, identifySpecs, validateEPD } from "../lib/functions";
@@ -9,7 +22,6 @@ import { SidebarProps } from "../lib/types";
 const Sidebar = ({
 	apiUrl,
 	apiKey,
-	model,
 	status,
 	setStatus,
 	setMarkdown,
@@ -24,11 +36,12 @@ const Sidebar = ({
 	jsonOut,
 }: SidebarProps) => {
 	const [uploadKey, setUploadKey] = useState(0);
+	const [selectedModel, setSelectedModel] = useState<string[]>(["Llama-4-Maverick-17B-128E-Instruct-FP8"]);
 
-	const llmParams = { apiUrl, apiKey, model };
+	const llmParams = { apiUrl, apiKey };
 
 	const onFileChange = useCallback(
-		async (files: File[]) => {
+		async (model: string, files: File[]) => {
 			const f = Array.isArray(files) ? files?.[0] : (files as any)?.item?.(0);
 			if (!f) return;
 			console.log("file changed");
@@ -66,21 +79,31 @@ const Sidebar = ({
 
 				addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
 
-				const validity = await validateEPD(llmParams, safeText);
+				const validity = await validateEPD({ ...llmParams, model: selectedModel[0] }, safeText, model);
 				setIsEpdValid(validity);
 				setStatus(validity ? "extracting" : "error");
 				addMsg({ role: "assistant", content: `${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
 				if (validity) {
-					const product_category = await identifyPC(llmParams, safeText);
+					const product_category = await identifyPC({ ...llmParams, model: selectedModel[0] }, safeText, model);
 					addMsg({ role: "assistant", content: `Product Category: ${product_category}` });
-					const number_of_products = await identifyProductNumbers(llmParams, safeText);
+					const number_of_products = await identifyProductNumbers(
+						{ ...llmParams, model: selectedModel[0] },
+						safeText,
+						model,
+					);
 					addMsg({ role: "assistant", content: `Number of Products: ${number_of_products}` });
 					const specs_data = identifySpecs(product_category);
-					await extractJSON({ ...llmParams, ajv, openEPDSchema }, safeText, specs_data, {
-						setJsonOut,
-						addMsg,
-						setValidation,
-					});
+					await extractJSON(
+						{ ...{ ...llmParams, model: selectedModel[0] }, ajv, openEPDSchema },
+						safeText,
+						specs_data,
+						{
+							setJsonOut,
+							addMsg,
+							setValidation,
+						},
+						model,
+					);
 				}
 				setStatus("done");
 			} catch (e: any) {
@@ -111,6 +134,14 @@ const Sidebar = ({
 		setIsEpdValid(null);
 	}, [setStatus, setMarkdown, setMessages, setJsonOut, setValidation]);
 
+	const models = createListCollection({
+		items: [
+			{ label: "Llama Maverick (r-chat)", value: "Llama-4-Maverick-17B-128E-Instruct-FP8" },
+			{ label: "GPT OSS (r-chat)", value: "gpt-oss-120b" },
+			{ label: "Nemotron (r-chat)", value: "NVIDIA-Nemotron-3-Super-120B-A12B-FP8" },
+		],
+	});
+
 	return (
 		<Container maxW={"20vw"} m={0} p={10}>
 			<Stack direction="column">
@@ -121,6 +152,39 @@ const Sidebar = ({
 				Please upload your Environmental Product Declaration (EPD) files here. The system will extract and analyze its
 				content using AI.
 			</Text>
+			<Stack direction="column" mt={5}>
+				<Select.Root
+					collection={models}
+					size="lg"
+					width={264}
+					colorPalette="white"
+					value={selectedModel}
+					onValueChange={(e) => setSelectedModel(e.value)}
+				>
+					<Select.HiddenSelect />
+					<Select.Label>Select Model</Select.Label>
+					<Select.Control>
+						<Select.Trigger>
+							<Select.ValueText placeholder="Select model" />
+						</Select.Trigger>
+						<Select.IndicatorGroup>
+							<Select.Indicator />
+						</Select.IndicatorGroup>
+					</Select.Control>
+					<Portal>
+						<Select.Positioner>
+							<Select.Content>
+								{models.items.map((models) => (
+									<Select.Item item={models} key={models.value}>
+										{models.label}
+										<Select.ItemIndicator />
+									</Select.Item>
+								))}
+							</Select.Content>
+						</Select.Positioner>
+					</Portal>
+				</Select.Root>
+			</Stack>
 
 			<FileUpload.Root
 				key={uploadKey}
@@ -133,7 +197,7 @@ const Sidebar = ({
 					const files = uploads.acceptedFiles;
 					const list = Array?.isArray(files) ? files : Array?.from(files ?? []);
 					if (!list.length) return;
-					void onFileChange(list);
+					void onFileChange(selectedModel[0], list);
 				}}
 			>
 				<FileUpload.HiddenInput accept=".pdf,.htm,.html" />

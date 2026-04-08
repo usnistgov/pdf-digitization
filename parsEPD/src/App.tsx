@@ -43,7 +43,6 @@ export default function App() {
 	// LLM Config
 	const apiUrl = import.meta.env.VITE_LLM_URL;
 	const apiKey = import.meta.env.VITE_RCHAT_API_KEY;
-	const model = import.meta.env.VITE_MODEL;
 
 	// State sidebar will update
 	const [status, setStatus] = useState<Status>("idle");
@@ -56,8 +55,7 @@ export default function App() {
 	useEffect(() => {
 		localStorage.setItem("pars_api_url", apiUrl);
 		localStorage.setItem("pars_api_key", apiKey);
-		localStorage.setItem("pars_model", model);
-	}, [apiUrl, apiKey, model]);
+	}, [apiUrl, apiKey]);
 
 	const ajv = useMemo(() => {
 		const a = new Ajv({ allErrors: true, strict: false });
@@ -88,7 +86,6 @@ export default function App() {
 					<Sidebar // config
 						apiUrl={apiUrl}
 						apiKey={apiKey}
-						model={model}
 						// state + setters that the sidebar pipeline will update
 						status={status}
 						setStatus={setStatus}

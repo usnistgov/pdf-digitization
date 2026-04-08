@@ -7,7 +7,6 @@ export type SidebarProps = {
 	// LLM config
 	apiUrl: string;
 	apiKey?: string;
-	model: string;
 
 	// State and setters (lifted into App)
 	status: Status;
