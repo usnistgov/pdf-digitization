@@ -9,24 +9,10 @@ export async function chatCompletion(opts: {
 	max_tokens?: number;
 	top_p: number;
 	backend?: string;
-	projectId?: string;
-	location?: string;
 	// Backend proxy configuration
 	backendUrl?: string;
 }) {
-	const {
-		apiUrl,
-		apiKey,
-		model,
-		messages,
-		temperature = 0,
-		max_tokens = 4096,
-		top_p = 1,
-		backend = "generic",
-		projectId,
-		location,
-		backendUrl,
-	} = opts;
+	const { apiUrl, model, messages, temperature = 0, max_tokens = 4096, top_p = 1, backend, backendUrl } = opts;
 
 	const baseUrl = backendUrl || apiUrl;
 	if (!baseUrl) {
@@ -46,13 +32,7 @@ export async function chatCompletion(opts: {
 			temperature,
 			max_tokens,
 			top_p,
-			// Pass through backend config if needed for Vertex AI
-			...(backend === "vertex" && {
-				apiUrl,
-				apiKey,
-				projectId,
-				location,
-			}),
+			backend,
 		}),
 	});
 

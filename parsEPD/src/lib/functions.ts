@@ -6,6 +6,7 @@ import specs from "./specs";
 interface CallLLMParams {
 	apiUrl: string;
 	model: string;
+	backend: string;
 }
 
 const callLLM = async (
@@ -13,37 +14,45 @@ const callLLM = async (
 	params: CallLLMParams,
 	systemPrompt: string[],
 	userPrompt: string,
+	backend: string,
 ): Promise<string> => {
 	const instructions = systemPrompt.map((prompt) => {
 		return { role: "system", content: prompt };
 	});
-	let res;
-	if (model !== "gemini-2.5-pro") {
-		res = await chatCompletion({
-			apiUrl: params.apiUrl,
-			model: params.model,
-			temperature: 0,
-			top_p: 1,
-			//@ts-ignore
-			messages: [...instructions, { role: "user", content: userPrompt }],
-		});
-	} else {
-		console.log("calling vertex");
-	}
+	let res = await chatCompletion({
+		apiUrl: params.apiUrl,
+		model: params.model,
+		temperature: 0,
+		top_p: 1,
+		//@ts-ignore
+		messages: [...instructions, { role: "user", content: userPrompt }],
+		backend,
+	});
+
 	return res;
 };
 
-export const validateEPD = async (params: CallLLMParams, safeText: string, model: string): Promise<boolean> => {
+export const validateEPD = async (
+	params: CallLLMParams,
+	safeText: string,
+	model: string,
+	backend: string,
+): Promise<boolean> => {
 	console.log("Validating EPD...");
 	console.log(system_prompt(safeText));
-	const reply = await callLLM(model, params, [system_prompt(safeText), filecheck_prompt], safeText);
+	const reply = await callLLM(model, params, [system_prompt(safeText), filecheck_prompt], safeText, backend);
 	const ok = /valid epd/i.test(reply);
 	return ok;
 };
 
-export const identifyPC = async (params: CallLLMParams, safeText: string, model: string): Promise<string> => {
+export const identifyPC = async (
+	params: CallLLMParams,
+	safeText: string,
+	model: string,
+	backend: string,
+): Promise<string> => {
 	console.log("Identifying product category...");
-	const reply = await callLLM(model, params, [system_prompt(safeText), category_prompt], safeText);
+	const reply = await callLLM(model, params, [system_prompt(safeText), category_prompt], safeText, backend);
 	console.log(reply);
 	return reply;
 };
@@ -52,6 +61,7 @@ export const identifyProductNumbers = async (
 	params: CallLLMParams,
 	safeText: string,
 	model: string,
+	backend: string,
 ): Promise<string> => {
 	console.log("Identifying number of products...");
 	const reply = await callLLM(
@@ -62,6 +72,7 @@ export const identifyProductNumbers = async (
 			"Some EPDs might have more than one product. Identify how many products are declared in this EPD.",
 		],
 		safeText,
+		backend,
 	);
 	console.log(reply);
 	return reply;
@@ -91,6 +102,7 @@ export const extractJSON = async (
 		setValidation: (msg: string) => void;
 	},
 	model: string,
+	backend: string,
 ): Promise<void> => {
 	console.log("extracting json...");
 	const reply = await callLLM(
@@ -98,6 +110,7 @@ export const extractJSON = async (
 		params,
 		[extraction_prompt_json(specs)],
 		`<epd_content>\n${safeText}\n</epd_content>`,
+		backend,
 	);
 	let fixedReply = fixIncompleteJSON(reply);
 
