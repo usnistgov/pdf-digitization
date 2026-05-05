@@ -12,7 +12,17 @@ export async function chatCompletion(opts: {
 	// Backend proxy configuration
 	backendUrl?: string;
 }) {
-	const { apiUrl, model, messages, temperature = 0, max_tokens = 4096, top_p = 1, backend, backendUrl } = opts;
+	const {
+		apiUrl,
+		apiKey,
+		model,
+		messages,
+		temperature = 0,
+		max_tokens = 16384,
+		top_p = 1,
+		backend = "generic",
+		backendUrl,
+	} = opts;
 
 	const baseUrl = backendUrl || apiUrl;
 	if (!baseUrl) {
