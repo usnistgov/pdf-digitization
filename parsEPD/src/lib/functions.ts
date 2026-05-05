@@ -10,7 +10,6 @@ interface CallLLMParams {
 }
 
 const callLLM = async (
-	model: string,
 	params: CallLLMParams,
 	systemPrompt: string[],
 	userPrompt: string,
@@ -19,6 +18,7 @@ const callLLM = async (
 	const instructions = systemPrompt.map((prompt) => {
 		return { role: "system", content: prompt };
 	});
+	console.log(params);
 	let res = await chatCompletion({
 		apiUrl: params.apiUrl,
 		model: params.model,
@@ -28,7 +28,6 @@ const callLLM = async (
 		messages: [...instructions, { role: "user", content: userPrompt }],
 		backend,
 	});
-
 	return res;
 };
 
@@ -39,8 +38,8 @@ export const validateEPD = async (
 	backend: string,
 ): Promise<boolean> => {
 	console.log("Validating EPD...");
-	console.log(system_prompt(safeText));
-	const reply = await callLLM(model, params, [system_prompt(safeText), filecheck_prompt], safeText, backend);
+	// console.log(system_prompt(safeText));
+	const reply = await callLLM(params, [system_prompt(safeText), filecheck_prompt], safeText, backend);
 	const ok = /valid epd/i.test(reply);
 	return ok;
 };
@@ -52,7 +51,7 @@ export const identifyPC = async (
 	backend: string,
 ): Promise<string> => {
 	console.log("Identifying product category...");
-	const reply = await callLLM(model, params, [system_prompt(safeText), category_prompt], safeText, backend);
+	const reply = await callLLM(params, [system_prompt(safeText), category_prompt], safeText, backend);
 	console.log(reply);
 	return reply;
 };
@@ -65,7 +64,6 @@ export const identifyProductNumbers = async (
 ): Promise<string> => {
 	console.log("Identifying number of products...");
 	const reply = await callLLM(
-		model,
 		params,
 		[
 			system_prompt(safeText),
@@ -106,7 +104,6 @@ export const extractJSON = async (
 ): Promise<void> => {
 	console.log("extracting json...");
 	const reply = await callLLM(
-		model,
 		params,
 		[extraction_prompt_json(specs)],
 		`<epd_content>\n${safeText}\n</epd_content>`,
@@ -139,7 +136,7 @@ export const extractJSON = async (
 		if (!valid) {
 			console.log("AJV Validation Errors:", validate.errors);
 			const errorDetails = validate.errors
-				?.map((err) => `${err.instancePath || "root"}: ${err.message} (received: ${JSON.stringify(err.data)})`)
+				?.map((err: any) => `${err.instancePath || "root"}: ${err.message} (received: ${JSON.stringify(err.data)})`)
 				.join("\n");
 
 			callbacks.setValidation(`⚠️ Schema validation warning:\n${errorDetails}`);

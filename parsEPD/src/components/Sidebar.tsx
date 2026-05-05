@@ -152,8 +152,8 @@ const Sidebar = ({
 			{ label: "Llama Maverick (r-chat)", value: "Llama-4-Maverick-17B-128E-Instruct-FP8", backend: "rchat" },
 			{ label: "GPT OSS (r-chat)", value: "gpt-oss-120b", backend: "rchat" },
 			{ label: "Nemotron (r-chat)", value: "NVIDIA-Nemotron-3-Super-120B-A12B-FP8", backend: "rchat" },
-			{ label: "Gemini 2.0 Flash (Vertex)", value: "google/gemini-2.0-flash-001", backend: "vertex" },
-			// { label: "Claude 3.5 (Vertex)", value: "anthropic/claude-3-5-sonnet", backend: "vertex" },
+			{ label: "Gemini 2.5 Flash (Vertex)", value: "google/gemini-2.5-flash", backend: "vertex" },
+			{ label: "Claude Opus 4.6 (Vertex)", value: "anthropic/claude-opus-4-6", backend: "vertex" },
 		],
 	});
 

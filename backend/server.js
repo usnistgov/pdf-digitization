@@ -1,11 +1,11 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const { GoogleAuth } = require("google-auth-library");
 
 const app = express();
 const PORT = process.env.VITE_PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -19,7 +19,7 @@ const callRChat = async (model, messages, temperature, max_tokens, top_p) => {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
-			...(apiKey && { Authorization: `Bearer ${apiKey}` }),
+			Authorization: `Bearer ${apiKey}`,
 		},
 		body: JSON.stringify({ model, messages, temperature, max_tokens, top_p, stream: false }),
 	});
@@ -27,29 +27,117 @@ const callRChat = async (model, messages, temperature, max_tokens, top_p) => {
 	return res.json();
 };
 
-const callVertex = async (model, messages, temperature, max_tokens) => {
-	const apiKey = process.env.VITE_VERTEX_API_KEY;
-	const location = process.env.VITE_VERTEX_LOCATION;
-	const projectId = process.env.VITE_PROJECT_ID;
-	if (!apiKey) throw new Error("vertex api key not configured");
-	if (!projectId) throw new Error("project id not configured");
+// ---------- Vertex auth (shared) ----------
+const vertexAuth = new GoogleAuth({
+	scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+});
 
-	const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/endpoints/openapi/chat/completions`;
+const getVertexToken = async () => {
+	const t = await vertexAuth.getAccessToken();
+	const token = typeof t === "string" ? t : t?.token;
+	if (!token) throw new Error("Failed to obtain Vertex access token");
+	return token;
+};
+
+const vertexHost = (location) =>
+	location === "global" ? "aiplatform.googleapis.com" : `${location}-aiplatform.googleapis.com`;
+
+const isClaudeModel = (model) => /^(anthropic\/)?claude/i.test(model);
+
+// ---------- Vertex: Gemini via OpenAI-compat ----------
+const callVertexGemini = async (model, messages, temperature, max_tokens) => {
+	const location = process.env.VITE_VERTEX_LOCATION;
+	const projectId = process.env.VITE_VERTEX_PROJECT_ID;
+	if (!projectId) throw new Error("project id not configured");
+	if (!location) throw new Error("vertex location not configured");
+
+	const accessToken = await getVertexToken();
+	const url = `https://${vertexHost(location)}/v1/projects/${projectId}/locations/${location}/endpoints/openapi/chat/completions`;
+	const vertexModel = model.includes("/") ? model : `google/${model}`;
 
 	const res = await fetch(url, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
-			Authorization: `Bearer ${apiKey}`,
+			Authorization: `Bearer ${accessToken}`,
 		},
-		body: JSON.stringify({ model, messages, temperature, max_tokens, stream: false }),
+		body: JSON.stringify({ model: vertexModel, messages, temperature, max_tokens, stream: false }),
 	});
-
-	if (!res.ok) throw new Error(`vertex API error ${res.status}: ${await res.text()}`);
-	return res.json();
+	if (!res.ok) throw new Error(`vertex (gemini) error ${res.status}: ${await res.text()}`);
+	return res.json(); // already OpenAI-shaped
 };
 
-// Proxy endpoint for LLM chat completions
+// ---------- Vertex: Claude ----------
+const splitSystem = (messages) => {
+	const sys = messages
+		.filter((m) => m.role === "system")
+		.map((m) => m.content)
+		.join("\n\n");
+	const rest = messages.filter((m) => m.role !== "system");
+	return { system: sys || undefined, messages: rest };
+};
+
+// Convert Anthropic response → OpenAI chat.completion shape
+const anthropicToOpenAI = (resp, requestedModel) => {
+	const text = (resp.content || [])
+		.filter((c) => c.type === "text")
+		.map((c) => c.text)
+		.join("");
+	const stopMap = { end_turn: "stop", max_tokens: "length", stop_sequence: "stop", tool_use: "tool_calls" };
+	return {
+		id: resp.id,
+		object: "chat.completion",
+		created: Math.floor(Date.now() / 1000),
+		model: resp.model || requestedModel,
+		choices: [
+			{
+				index: 0,
+				message: { role: "assistant", content: text },
+				finish_reason: stopMap[resp.stop_reason] || "stop",
+			},
+		],
+		usage: {
+			prompt_tokens: resp.usage?.input_tokens ?? 0,
+			completion_tokens: resp.usage?.output_tokens ?? 0,
+			total_tokens: (resp.usage?.input_tokens ?? 0) + (resp.usage?.output_tokens ?? 0),
+		},
+	};
+};
+
+const callVertexClaude = async (model, messages, temperature, max_tokens) => {
+	const location = process.env.VITE_VERTEX_CLAUDE_LOCATION || process.env.VITE_VERTEX_LOCATION;
+	const projectId = process.env.VITE_VERTEX_PROJECT_ID;
+	if (!projectId) throw new Error("project id not configured");
+	if (!location) throw new Error("vertex location not configured");
+
+	const accessToken = await getVertexToken();
+	// Strip optional "anthropic/" prefix if frontend sends it
+	const modelId = model.replace(/^anthropic\//, "");
+	const url = `https://${vertexHost(location)}/v1/projects/${projectId}/locations/${location}/publishers/anthropic/models/${modelId}:rawPredict`;
+
+	const { system, messages: msgs } = splitSystem(messages);
+
+	const body = {
+		anthropic_version: "vertex-2023-10-16",
+		messages: msgs,
+		max_tokens, // REQUIRED by Anthropic
+		temperature,
+		...(system && { system }),
+	};
+
+	const res = await fetch(url, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${accessToken}`,
+		},
+		body: JSON.stringify(body),
+	});
+	if (!res.ok) throw new Error(`vertex (claude) error ${res.status}: ${await res.text()}`);
+	const data = await res.json();
+	return anthropicToOpenAI(data, modelId);
+};
+
 app.post("/chat/completions", async (req, res) => {
 	try {
 		const { model, messages, temperature = 0, max_tokens = 4096, top_p = 1, backend = "rchat" } = req.body;
@@ -57,7 +145,9 @@ app.post("/chat/completions", async (req, res) => {
 
 		let data;
 		if (backend === "vertex") {
-			data = await callVertex(model, messages, temperature, max_tokens);
+			data = isClaudeModel(model)
+				? await callVertexClaude(model, messages, temperature, max_tokens)
+				: await callVertexGemini(model, messages, temperature, max_tokens);
 		} else {
 			data = await callRChat(model, messages, temperature, max_tokens, top_p);
 		}
@@ -65,11 +155,10 @@ app.post("/chat/completions", async (req, res) => {
 		res.json(data);
 	} catch (error) {
 		console.error("Proxy error:", error);
-		res.status(500).json({ error: "Internal proxy error" });
+		res.status(500).json({ error: error.message });
 	}
 });
 
-// Health check endpoint
 app.get("/health", (req, res) => {
 	res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
