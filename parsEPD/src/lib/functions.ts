@@ -1,4 +1,4 @@
-import { fixIncompleteJSON } from "./guards";
+import { jsonrepair } from "jsonrepair";
 import { chatCompletion } from "./llm";
 import { category_prompt, extraction_prompt_json, filecheck_prompt, system_prompt } from "./prompts";
 import specs from "./specs";
@@ -99,17 +99,14 @@ export const extractJSON = async (
 		[extraction_prompt_json(specs)],
 		`<epd_content>\n${safeText}\n</epd_content>`,
 	);
-	let fixedReply = fixIncompleteJSON(reply);
 
-	// Extract first {...}
-	const match = fixedReply.match(/\{[\s\S]*\}/);
+	// Extract first {...} then repair any truncated/malformed JSON
+	const match = reply.match(/\{[\s\S]*\}/);
 	if (!match) throw new Error("No JSON object found in model output.");
-	let raw = match[0];
 
 	let obj;
-
 	try {
-		obj = JSON.parse(raw);
+		obj = JSON.parse(jsonrepair(match[0]));
 	} catch (parseError: any) {
 		console.error("JSON Parse Error:", parseError);
 		throw new Error(`Failed to parse JSON: ${parseError.message}`);
