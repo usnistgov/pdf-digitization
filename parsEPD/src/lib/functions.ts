@@ -14,6 +14,7 @@ const callLLM = async (
 	systemPrompt: string[],
 	userPrompt: string,
 	backend: string,
+	stream = false,
 ): Promise<string> => {
 	const instructions = systemPrompt.map((prompt) => {
 		return { role: "system", content: prompt };
@@ -27,6 +28,7 @@ const callLLM = async (
 		//@ts-ignore
 		messages: [...instructions, { role: "user", content: userPrompt }],
 		backend,
+		stream,
 	});
 	return res;
 };
@@ -108,6 +110,7 @@ export const extractJSON = async (
 		[extraction_prompt_json(specs, params.openEPDSchema)],
 		`<epd_content>\n${safeText}\n</epd_content>`,
 		backend,
+		true,
 	);
 
 	// Extract first {...} then repair any truncated/malformed JSON

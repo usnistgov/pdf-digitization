@@ -9,7 +9,7 @@ const PORT = process.env.VITE_PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const callRChat = async (model, messages, temperature, max_tokens, top_p) => {
+const callRChat = async (model, messages, temperature, max_tokens, top_p, stream = false) => {
 	const apiUrl = process.env.VITE_LLM_URL;
 	const apiKey = process.env.VITE_RCHAT_API_KEY;
 	if (!apiUrl) throw new Error("LLM_API_URL not configured");
@@ -21,10 +21,10 @@ const callRChat = async (model, messages, temperature, max_tokens, top_p) => {
 			"Content-Type": "application/json",
 			Authorization: `Bearer ${apiKey}`,
 		},
-		body: JSON.stringify({ model, messages, temperature, max_tokens, top_p, stream: false }),
+		body: JSON.stringify({ model, messages, temperature, max_tokens, top_p, stream }),
 	});
 	if (!res.ok) throw new Error(`RChat error ${res.status}: ${await res.text()}`);
-	return res.json();
+	return { response: res, isStream: stream };
 };
 
 // ---------- Vertex auth (shared) ----------
@@ -140,22 +140,47 @@ const callVertexClaude = async (model, messages, temperature, max_tokens) => {
 
 app.post("/chat/completions", async (req, res) => {
 	try {
-		const { model, messages, temperature = 0, max_tokens = 4096, top_p = 1, backend = "rchat" } = req.body;
-		console.log(model, backend);
+		const { model, messages, temperature = 0, max_tokens = 4096, top_p = 1, backend = "rchat", stream = false } = req.body;
+		console.log(model, backend, stream ? "(streaming)" : "");
 
-		let data;
 		if (backend === "vertex") {
-			data = isClaudeModel(model)
+			const data = isClaudeModel(model)
 				? await callVertexClaude(model, messages, temperature, max_tokens)
 				: await callVertexGemini(model, messages, temperature, max_tokens);
-		} else {
-			data = await callRChat(model, messages, temperature, max_tokens, top_p);
+			return res.json(data);
 		}
 
-		res.json(data);
+		const result = await callRChat(model, messages, temperature, max_tokens, top_p, stream);
+
+		if (!stream) {
+			const data = await result.response.json();
+			return res.json(data);
+		}
+
+		res.setHeader("Content-Type", "text/event-stream");
+		res.setHeader("Cache-Control", "no-cache");
+		res.setHeader("Connection", "keep-alive");
+		res.flushHeaders();
+
+		const reader = result.response.body.getReader();
+		const decoder = new TextDecoder();
+
+		try {
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				res.write(decoder.decode(value, { stream: true }));
+			}
+		} finally {
+			res.end();
+		}
 	} catch (error) {
 		console.error("Proxy error:", error);
-		res.status(500).json({ error: error.message });
+		if (!res.headersSent) {
+			res.status(500).json({ error: error.message });
+		} else {
+			res.end();
+		}
 	}
 });
 
