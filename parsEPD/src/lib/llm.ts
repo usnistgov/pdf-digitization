@@ -9,8 +9,8 @@ export async function chatCompletion(opts: {
 	max_tokens?: number;
 	top_p: number;
 	backend?: string;
-	// Backend proxy configuration
 	backendUrl?: string;
+	stream?: boolean;
 }) {
 	const {
 		apiUrl,
@@ -22,6 +22,7 @@ export async function chatCompletion(opts: {
 		top_p = 1,
 		backend = "generic",
 		backendUrl,
+		stream = false,
 	} = opts;
 
 	const baseUrl = backendUrl || apiUrl;
@@ -33,9 +34,7 @@ export async function chatCompletion(opts: {
 
 	const res = await fetch(proxyUrl, {
 		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
+		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({
 			model,
 			messages,
@@ -43,6 +42,7 @@ export async function chatCompletion(opts: {
 			max_tokens,
 			top_p,
 			backend,
+			...(stream && { stream: true }),
 		}),
 	});
 
@@ -50,6 +50,42 @@ export async function chatCompletion(opts: {
 		const text = await res.text();
 		throw new Error(`LLM proxy error ${res.status}: ${text}`);
 	}
-	const json = await res.json();
-	return json?.choices?.[0]?.message?.content ?? "";
+
+	if (!stream) {
+		const json = await res.json();
+		return json?.choices?.[0]?.message?.content ?? "";
+	}
+
+	const reader = res.body?.getReader();
+	if (!reader) throw new Error("No response body for streaming");
+
+	const decoder = new TextDecoder();
+	let content = "";
+	let buffer = "";
+
+	while (true) {
+		const { done, value } = await reader.read();
+		if (done) break;
+
+		buffer += decoder.decode(value, { stream: true });
+		const lines = buffer.split("\n");
+		buffer = lines.pop() ?? "";
+
+		for (const line of lines) {
+			const trimmed = line.trim();
+			if (!trimmed || !trimmed.startsWith("data: ")) continue;
+			const data = trimmed.slice(6);
+			if (data === "[DONE]") break;
+
+			try {
+				const parsed = JSON.parse(data);
+				const delta = parsed?.choices?.[0]?.delta?.content;
+				if (delta) content += delta;
+			} catch {
+				// skip malformed chunks
+			}
+		}
+	}
+
+	return content;
 }
