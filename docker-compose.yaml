@@ -1,14 +1,15 @@
-version: "3.9"
 services:
-  pdf-digitization:
-    image: node:14
+  parsepd:
     build:
-      context: ./parsEPD
+      context: .
       dockerfile: Dockerfile
+      # VITE_API_URL is the only frontend env var read at runtime.
+      # Default "/" makes the SPA call /chat/completions on the same origin,
+      # which nginx proxies to the backend.
+      args:
+        VITE_API_URL: /
     ports:
-      - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=http://api.example.com
-      - REACT_APP_DEBUG=true
-    volumes:
-      - ./src:/app/src
+      - "8080:8080"
+    # Backend secrets — set values in a .env file at repo root, never hardcode here
+    env_file: .env
+    restart: unless-stopped
