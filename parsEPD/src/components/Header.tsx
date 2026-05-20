@@ -20,19 +20,19 @@ const Header = () => {
 			</Text>
 			<br />
 			<List.Root textStyle="lg" fontWeight="semibold">
-				Steps to Use ParsEPD:
+				Steps to use parsEPD:
 			</List.Root>
 			<List.Root fontWeight="semibold" textStyle="lg">
 				<List.Item textStyle="md">
-					Upload your PDF formatted EPD – ParsEPD automatically Watch as parsEPD validates that the PDF is an EPD,
-					identifies, its product category, and then creates and displays the openEPD file.
+					Upload your PDF formatted EPD – Watch as parsEPD automatically validates whether the PDF is an EPD, identifies
+					the product category, counts the number of products, and then creates and displays the openEPD file.
 				</List.Item>
-				<List.Item textStyle="md">View the openEPD file in the chat. </List.Item>
+				<List.Item textStyle="md">View the openEPD file.</List.Item>
 				<List.Item textStyle="md">Download the openEPD File using the “Download” button in the chat. </List.Item>
 				<List.Item textStyle="md">
-					The user can remove or replace the EPD as well as start over using options provided in left hand column.{" "}
+					The user can remove or replace the EPD as well as start over using options provided in left sidebar.{" "}
 				</List.Item>
-				<List.Item textStyle="md">Only the most recent uploaded EPD is available for conversion.</List.Item>
+				<List.Item textStyle="md">Only the most recently uploaded EPD is available for conversion.</List.Item>
 			</List.Root>
 		</>
 	);
