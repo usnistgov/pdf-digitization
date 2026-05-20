@@ -5,7 +5,7 @@ const Nav = () => {
 	return (
 		<Box background="black" width="100%" padding={8} color="white">
 			<Flex gap="10" justifyContent={"flex-end"} fontSize={"lg"} fontWeight={"bold"}>
-				<Link href="../../public/nist-header-footer/nist-combined.css" target="_blank">
+				<Link href="/user-guide.html" target="_blank">
 					User Guide <LuExternalLink />
 				</Link>
 				<Link href="https://www.nist.gov/programs-projects/building-system-economics" target="_blank">
