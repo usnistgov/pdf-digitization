@@ -203,7 +203,6 @@ export default function App() {
 								</Tabs.List>
 								{jsonOut.map((item, index) => (
 									<Tabs.Content key={index} value={index.toString()}>
-										{/* <pre>{JSON.stringify(item, null, 2)}</pre> */}
 										<JsonEditor
 											data={item}
 											restrictEdit={true}
@@ -220,19 +219,6 @@ export default function App() {
 								))}
 							</Tabs.Root>
 						)}
-						{/* {jsonOut && (
-							<JsonEditor
-								data={jsonOut}
-								restrictEdit={true}
-								restrictDelete={true}
-								restrictAdd={true}
-								viewOnly={true}
-								collapse={1}
-								rootName="openEPD"
-								theme={githubDarkTheme}
-								maxWidth={"100%"}
-							/>
-						)} */}
 
 						{validation && (
 							<Container border={"1px"} borderColor={"gray.200"} borderRadius={10} mt={5}>
