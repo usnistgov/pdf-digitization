@@ -1,4 +1,4 @@
-import { Image, List, Stack, Text } from "@chakra-ui/react";
+import { Image, Link, List, Stack, Text } from "@chakra-ui/react";
 const Header = () => {
 	return (
 		<>
@@ -12,8 +12,8 @@ const Header = () => {
 			<br />
 			<Text textStyle="lg" fontWeight="semibold">
 				parsEPD converts an EPD from PDF or HTML format to a standardized, machine-readable JSON format (openEPD) using
-				a large language model (LLM) for the parsing and conversion. For details about the process, please see the
-				ParsEPD User Guide.
+				a large language model (LLM) for the parsing and conversion. For details about the process, please see the{" "}
+				<Link href="/user-guide.html" target="_blank" color="blue.300">ParsEPD User Guide</Link>.
 			</Text>
 			<br />
 			<List.Root textStyle="lg" fontWeight="semibold">
