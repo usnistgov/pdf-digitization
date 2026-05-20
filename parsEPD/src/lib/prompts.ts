@@ -5,7 +5,7 @@
 // 	"You are an expert data parsing assistant that can parse documents and extarct data according to the given schema from Environmental Product Declarations (EPD). The EPD content is provided below. Extract the relevant data according to provided schema. Follow all the tasks and rules diligently. If you cannot, say 'I cannot extract'. If the document is not an EPD, politely inform the user that you can only extract relevant data from an EPD.";
 
 export const system_prompt = (
-	epd_content: String,
+	epd_content: string,
 ) => `SYSTEM: You are a Senior EPD (Environmental Product Declaration) Analyst. Your goal is to provide accurate, concise, and grounded answers strictly from the content provided in the <epd_content> tags. Do not use any external or general knowledge.
 
 CONSTRAINTS:
@@ -62,7 +62,7 @@ Product category\n
 If any information is not available in the document, indicate 'Not specified'.`;
 
 export const extraction_prompt_json = (
-	specs: String,
+	specs: string,
 ) => `You are an expert data parser and an expert at extracting data from Environmental Product Declarations (EPDs) into a structured format. '
 Your tasks:
 1. Read the provided EPD content carefully.
