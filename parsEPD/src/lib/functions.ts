@@ -2,6 +2,7 @@ import { jsonrepair } from "jsonrepair";
 import { chatCompletion } from "./llm";
 import { category_prompt, extraction_prompt_json, filecheck_prompt, system_prompt } from "./prompts";
 import specs from "./specs";
+import { ChatMessage } from "./types";
 
 interface CallLLMParams {
 	apiUrl: string;
@@ -35,7 +36,6 @@ const callLLM = async (
 
 export const validateEPD = async (params: CallLLMParams, safeText: string, model: string): Promise<boolean> => {
 	console.log("Validating EPD...");
-	console.log(system_prompt(safeText));
 	const reply = await callLLM(model, params, [system_prompt(safeText), filecheck_prompt], safeText);
 	const ok = /valid epd/i.test(reply);
 	return ok;
@@ -87,7 +87,7 @@ export const extractJSON = async (
 	specs: string,
 	callbacks: {
 		setJsonOut: (obj: any) => void;
-		addMsg: (msg: { role: string; content: string }) => void;
+		addMsg: (msg: ChatMessage) => void;
 		setValidation: (msg: string) => void;
 	},
 	model: string,
@@ -123,7 +123,7 @@ export const extractJSON = async (
 		if (!valid) {
 			console.log("AJV Validation Errors:", validate.errors);
 			const errorDetails = validate.errors
-				?.map((err) => `${err.instancePath || "root"}: ${err.message} (received: ${JSON.stringify(err.data)})`)
+				?.map((err: any) => `${err.instancePath || "root"}: ${err.message} (received: ${JSON.stringify(err.data)})`)
 				.join("\n");
 
 			callbacks.setValidation(`⚠️ Schema validation warning:\n${errorDetails}`);
