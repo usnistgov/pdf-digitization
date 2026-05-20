@@ -2,6 +2,7 @@ import { jsonrepair } from "jsonrepair";
 import { chatCompletion } from "./llm";
 import { category_prompt, extraction_prompt_json, filecheck_prompt, system_prompt } from "./prompts";
 import specs from "./specs";
+import { ChatMessage } from "./types";
 
 interface CallLLMParams {
 	apiUrl: string;
@@ -40,7 +41,6 @@ export const validateEPD = async (
 	backend: string,
 ): Promise<boolean> => {
 	console.log("Validating EPD...");
-	// console.log(system_prompt(safeText));
 	const reply = await callLLM(params, [system_prompt(safeText), filecheck_prompt], safeText, backend);
 	const ok = /valid epd/i.test(reply) && !/not an epd/i.test(reply);
 	return ok;
@@ -98,7 +98,7 @@ export const extractJSON = async (
 	specs: string,
 	callbacks: {
 		setJsonOut: (obj: any) => void;
-		addMsg: (msg: { role: string; content: string }) => void;
+		addMsg: (msg: ChatMessage) => void;
 		setValidation: (msg: string) => void;
 	},
 	model: string,

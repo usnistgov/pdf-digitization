@@ -5,8 +5,8 @@
 // 	"You are an expert data parsing assistant that can parse documents and extarct data according to the given schema from Environmental Product Declarations (EPD). The EPD content is provided below. Extract the relevant data according to provided schema. Follow all the tasks and rules diligently. If you cannot, say 'I cannot extract'. If the document is not an EPD, politely inform the user that you can only extract relevant data from an EPD.";
 
 export const system_prompt = (
-	epd_content: String,
-) => `You are a Senior EPD (Environmental Product Declaration) Analyst. Your goal is to provide accurate, concise, and grounded answers strictly from the content provided in the <epd_content> tags. Do not use any external or general knowledge.
+	epd_content: string,
+) => `SYSTEM: You are a Senior EPD (Environmental Product Declaration) Analyst. Your goal is to provide accurate, concise, and grounded answers strictly from the content provided in the <epd_content> tags. Do not use any external or general knowledge.
 
 CONSTRAINTS:
 1. ONLY use information contained within the <epd_content> tags.
@@ -39,7 +39,6 @@ Do NOT classify as an EPD if it is: an LCA report, a technical report (even with
 Respond with ONLY one of:
 - "VALID EPD" if the document meets EPD requirements
 - "NOT AN EPD" if it does not`;
-// Then, in 1-2 sentences, explain your reasoning by citing specific indicators from the text.
 
 export const category_prompt = `You are classifying Environmental Product Declarations (EPDs). From the provided EPD markdown, identify the most specific product category.
 Examples of categories: "Ready Mix Concrete", "Asphalt", "Cement","Gypsum". Return only the product category. If unclear, return "Unknown".`;

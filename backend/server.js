@@ -6,7 +6,12 @@ const { GoogleAuth } = require("google-auth-library");
 const app = express();
 const PORT = process.env.VITE_PORT || 5000;
 
-app.use(cors());
+// Middleware
+app.use(
+	cors({
+		origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+	}),
+);
 app.use(express.json());
 
 const callRChat = async (model, messages, temperature, max_tokens, top_p, stream = false) => {
@@ -140,7 +145,15 @@ const callVertexClaude = async (model, messages, temperature, max_tokens) => {
 
 app.post("/chat/completions", async (req, res) => {
 	try {
-		const { model, messages, temperature = 0, max_tokens = 4096, top_p = 1, backend = "rchat", stream = false } = req.body;
+		const {
+			model,
+			messages,
+			temperature = 0,
+			max_tokens = 4096,
+			top_p = 1,
+			backend = "rchat",
+			stream = false,
+		} = req.body;
 		console.log(model, backend, stream ? "(streaming)" : "");
 
 		if (backend === "vertex") {
