@@ -11,6 +11,7 @@ export async function chatCompletion(opts: {
 	backend?: string;
 	backendUrl?: string;
 	stream?: boolean;
+	onChunk?: (chunk: string) => void;
 }) {
 	const {
 		apiUrl,
@@ -22,7 +23,8 @@ export async function chatCompletion(opts: {
 		top_p = 1,
 		backend = "generic",
 		backendUrl,
-		stream = false,
+		stream = true,
+		onChunk,
 	} = opts;
 
 	const baseUrl = backendUrl || apiUrl;
@@ -80,7 +82,10 @@ export async function chatCompletion(opts: {
 			try {
 				const parsed = JSON.parse(data);
 				const delta = parsed?.choices?.[0]?.delta?.content;
-				if (delta) content += delta;
+				if (delta) {
+					content += delta;
+					onChunk?.(delta);
+				}
 			} catch {
 				// skip malformed chunks
 			}

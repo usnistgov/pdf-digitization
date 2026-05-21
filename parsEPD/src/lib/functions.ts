@@ -16,6 +16,7 @@ const callLLM = async (
 	userPrompt: string,
 	backend: string,
 	stream = false,
+	onChunk?: (chunk: string) => void,
 ): Promise<string> => {
 	const instructions = systemPrompt.map((prompt) => {
 		return { role: "system", content: prompt };
@@ -30,6 +31,7 @@ const callLLM = async (
 		messages: [...instructions, { role: "user", content: userPrompt }],
 		backend,
 		stream,
+		onChunk,
 	});
 	return res;
 };
@@ -100,6 +102,7 @@ export const extractJSON = async (
 		setJsonOut: (obj: any) => void;
 		addMsg: (msg: ChatMessage) => void;
 		setValidation: (msg: string) => void;
+		onChunk?: (chunk: string) => void;
 	},
 	model: string,
 	backend: string,
@@ -111,6 +114,7 @@ export const extractJSON = async (
 		`<epd_content>\n${safeText}\n</epd_content>`,
 		backend,
 		true,
+		callbacks.onChunk,
 	);
 
 	// Extract first {...} then repair any truncated/malformed JSON

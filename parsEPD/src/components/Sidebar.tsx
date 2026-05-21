@@ -28,6 +28,7 @@ const Sidebar = ({
 	setMessages,
 	setValidation,
 	setJsonOut,
+	setStreamingText,
 	addMsg,
 	ajv,
 	openEPDSchema,
@@ -59,6 +60,7 @@ const Sidebar = ({
 				setMessages([]);
 				setValidation("");
 				setJsonOut(null);
+				setStreamingText("");
 				setIsEpdValid(null);
 
 				const ext = f.name.toLowerCase().split(".").pop();
@@ -113,11 +115,15 @@ const Sidebar = ({
 							setJsonOut,
 							addMsg,
 							setValidation,
+							onChunk: (chunk) => {
+								setStreamingText((prev) => (prev + chunk).slice(-500));
+							},
 						},
 						model,
 						backend,
 					);
 				}
+				setStreamingText("");
 				setStatus("done");
 			} catch (e: any) {
 				console.error("Pipeline error:", e);
@@ -146,8 +152,9 @@ const Sidebar = ({
 		setMessages([]);
 		setJsonOut(null);
 		setValidation("");
+		setStreamingText("");
 		setIsEpdValid(null);
-	}, [setStatus, setMarkdown, setMessages, setJsonOut, setValidation]);
+	}, [setStatus, setMarkdown, setMessages, setJsonOut, setValidation, setStreamingText]);
 
 	const models = createListCollection({
 		items: [
