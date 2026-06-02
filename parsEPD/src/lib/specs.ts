@@ -18,7 +18,7 @@ const specs = {
             {
               "component": "",
               "material": "",
-              "has_data_gap": ,
+              "has_data_gap": false,
               "weight_pct": ""
             },
             {
@@ -30,7 +30,7 @@ const specs = {
             {
               "component": "",
               "material": "",
-              "has_data_gap": ,
+              "has_data_gap": false,
               "weight_pct": ""
             },
             {
@@ -42,13 +42,13 @@ const specs = {
             {
               "component": "",
               "material": "",
-              "has_data_gap":false ,
+              "has_data_gap":false,
               "weight_pct": ""
             },
             {
               "component": "",
               "material": "",
-              "has_data_gap": ,
+              "has_data_gap": false,
               "weight_pct": ""
             }
           ]
@@ -59,13 +59,13 @@ const specs = {
       "min_temperature": "",
       "mix_type": "WMA",
       "gradation": "",
-      "rap": ,
-      "ras": ,
-      "sbr": ,
-      "sbs": ,
-      "ppa": ,
-      "gtr": ,
-      "pmb": ,
+      "rap": 0,
+      "ras": 0,
+      "sbr": 0,
+      "sbs": 0,
+      "ppa": 0,
+      "gtr": 0,
+      "pmb": 0,
     }`,
 	cement: `cementitious: {
       opc: 0.0, //0.123,
