@@ -7,43 +7,55 @@ import { ChatMessage } from "./types";
 interface CallLLMParams {
 	apiUrl: string;
 	model: string;
+	backend: string;
 }
 
 const callLLM = async (
-	model: string,
 	params: CallLLMParams,
 	systemPrompt: string[],
 	userPrompt: string,
+	backend: string,
+	stream = false,
+	onChunk?: (chunk: string) => void,
 ): Promise<string> => {
 	const instructions = systemPrompt.map((prompt) => {
 		return { role: "system", content: prompt };
 	});
-	let res;
-	if (model !== "gemini-2.5-pro") {
-		res = await chatCompletion({
-			apiUrl: params.apiUrl,
-			model: params.model,
-			temperature: 0,
-			top_p: 1,
-			//@ts-ignore
-			messages: [...instructions, { role: "user", content: userPrompt }],
-		});
-	} else {
-		console.log("calling vertex");
-	}
+	console.log(params);
+	let res = await chatCompletion({
+		apiUrl: params.apiUrl,
+		model: params.model,
+		temperature: 0,
+		top_p: 1,
+		//@ts-ignore
+		messages: [...instructions, { role: "user", content: userPrompt }],
+		backend,
+		stream,
+		onChunk,
+	});
 	return res;
 };
 
-export const validateEPD = async (params: CallLLMParams, safeText: string, model: string): Promise<boolean> => {
+export const validateEPD = async (
+	params: CallLLMParams,
+	safeText: string,
+	model: string,
+	backend: string,
+): Promise<boolean> => {
 	console.log("Validating EPD...");
-	const reply = await callLLM(model, params, [system_prompt(safeText), filecheck_prompt], safeText);
-	const ok = /valid epd/i.test(reply);
+	const reply = await callLLM(params, [system_prompt(safeText), filecheck_prompt], safeText, backend);
+	const ok = /valid epd/i.test(reply) && !/not an epd/i.test(reply);
 	return ok;
 };
 
-export const identifyPC = async (params: CallLLMParams, safeText: string, model: string): Promise<string> => {
+export const identifyPC = async (
+	params: CallLLMParams,
+	safeText: string,
+	model: string,
+	backend: string,
+): Promise<string> => {
 	console.log("Identifying product category...");
-	const reply = await callLLM(model, params, [system_prompt(safeText), category_prompt], safeText);
+	const reply = await callLLM(params, [system_prompt(safeText), category_prompt], safeText, backend);
 	console.log(reply);
 	return reply;
 };
@@ -52,16 +64,17 @@ export const identifyProductNumbers = async (
 	params: CallLLMParams,
 	safeText: string,
 	model: string,
+	backend: string,
 ): Promise<string> => {
 	console.log("Identifying number of products...");
 	const reply = await callLLM(
-		model,
 		params,
 		[
 			system_prompt(safeText),
 			"Some EPDs might have more than one product. Identify how many products are declared in this EPD.",
 		],
 		safeText,
+		backend,
 	);
 	console.log(reply);
 	return reply;
@@ -89,15 +102,19 @@ export const extractJSON = async (
 		setJsonOut: (obj: any) => void;
 		addMsg: (msg: ChatMessage) => void;
 		setValidation: (msg: string) => void;
+		onChunk?: (chunk: string) => void;
 	},
 	model: string,
+	backend: string,
 ): Promise<void> => {
 	console.log("extracting json...");
 	const reply = await callLLM(
-		model,
 		params,
-		[extraction_prompt_json(specs)],
+		[extraction_prompt_json(specs, params.openEPDSchema)],
 		`<epd_content>\n${safeText}\n</epd_content>`,
+		backend,
+		true,
+		callbacks.onChunk,
 	);
 
 	// Extract first {...} then repair any truncated/malformed JSON

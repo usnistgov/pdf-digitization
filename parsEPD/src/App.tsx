@@ -50,6 +50,7 @@ export default function App() {
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [jsonOut, setJsonOut] = useState<any>(null);
 	const [validation, setValidation] = useState<string>("");
+	const [streamingText, setStreamingText] = useState<string>("");
 
 	useEffect(() => {
 		localStorage.setItem("pars_api_url", apiUrl);
@@ -90,6 +91,7 @@ export default function App() {
 						setMessages={setMessages}
 						setValidation={setValidation}
 						setJsonOut={setJsonOut}
+						setStreamingText={setStreamingText}
 						addMsg={addMsg}
 						ajv={ajv}
 						openEPDSchema={openEPDSchema as any}
@@ -189,11 +191,31 @@ export default function App() {
 										</Flex>
 									</Text>
 								))}
+								{streamingText && (
+									<Text
+										as="pre"
+										style={{
+											padding: 8,
+											margin: "6px 0",
+											background: "#000",
+											borderBottom: "1px solid #2e2e2e",
+											whiteSpace: "pre-wrap",
+											wordBreak: "break-all",
+											fontFamily: "monospace",
+											fontSize: "12px",
+											maxHeight: "300px",
+											height: "300px",
+											overflowY: "hidden",
+										}}
+									>
+										{streamingText}
+									</Text>
+								)}
 							</Container>
 						)}
 
 						{jsonOut && Array.isArray(jsonOut) && (
-							<Tabs.Root mt={5}>
+							<Tabs.Root mt={5} defaultValue={"0"} lazyMount>
 								<Tabs.List>
 									{jsonOut.map((_, index) => (
 										<Tabs.Trigger key={index} value={index.toString()}>

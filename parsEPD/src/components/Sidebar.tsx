@@ -28,6 +28,7 @@ const Sidebar = ({
 	setMessages,
 	setValidation,
 	setJsonOut,
+	setStreamingText,
 	addMsg,
 	ajv,
 	openEPDSchema,
@@ -35,7 +36,14 @@ const Sidebar = ({
 	jsonOut,
 }: SidebarProps) => {
 	const [uploadKey, setUploadKey] = useState(0);
-	const [selectedModel, setSelectedModel] = useState<string[]>(["Llama-4-Maverick-17B-128E-Instruct-FP8"]);
+	const [selectedModel, setSelectedModel] = useState<string>("Llama-4-Maverick-17B-128E-Instruct-FP8");
+	const [backend, setBackend] = useState<string>("rchat");
+
+	const onModelChange = (e: { value: string[]; items: { label: string; value: string; backend: string }[] }) => {
+		const model = e.items[0];
+		setSelectedModel(model.value);
+		setBackend(model.backend);
+	};
 
 	const llmParams = { apiUrl };
 
@@ -52,6 +60,7 @@ const Sidebar = ({
 				setMessages([]);
 				setValidation("");
 				setJsonOut(null);
+				setStreamingText("");
 				setIsEpdValid(null);
 
 				const ext = f.name.toLowerCase().split(".").pop();
@@ -78,34 +87,47 @@ const Sidebar = ({
 
 				addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
 
-				const validity = await validateEPD({ ...llmParams, model: selectedModel[0] }, safeText, model);
+				const validity = await validateEPD({ ...llmParams, model: selectedModel, backend }, safeText, model, backend);
 				setIsEpdValid(validity);
 				setStatus(validity ? "extracting" : "error");
 				addMsg({ role: "assistant", content: `${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
 				if (validity) {
-					const product_category = await identifyPC({ ...llmParams, model: selectedModel[0] }, safeText, model);
-					addMsg({ role: "assistant", content: `Product Category: ${product_category}` });
-					const number_of_products = await identifyProductNumbers(
-						{ ...llmParams, model: selectedModel[0] },
+					const product_category = await identifyPC(
+						{ ...llmParams, model: selectedModel, backend },
 						safeText,
 						model,
+						backend,
+					);
+					addMsg({ role: "assistant", content: `Product Category: ${product_category}` });
+					const number_of_products = await identifyProductNumbers(
+						{ ...llmParams, model: selectedModel, backend },
+						safeText,
+						model,
+						backend,
 					);
 					addMsg({ role: "assistant", content: `Number of Products: ${number_of_products}` });
 					const specs_data = identifySpecs(product_category);
 					await extractJSON(
-						{ ...{ ...llmParams, model: selectedModel[0] }, ajv, openEPDSchema },
+						{ ...{ ...llmParams, model: selectedModel, backend }, ajv, openEPDSchema },
 						safeText,
 						specs_data,
 						{
 							setJsonOut,
 							addMsg,
 							setValidation,
+							onChunk: (chunk) => {
+								setStreamingText((prev) => (prev + chunk).slice(-500));
+							},
 						},
 						model,
+						backend,
 					);
 				}
+				setStreamingText("");
 				setStatus("done");
 			} catch (e: any) {
+				console.error("Pipeline error:", e);
+				addMsg({ role: "assistant", content: `❌ ${e.message || "Unknown error"}` });
 				setStatus("error");
 			}
 		},
@@ -130,14 +152,18 @@ const Sidebar = ({
 		setMessages([]);
 		setJsonOut(null);
 		setValidation("");
+		setStreamingText("");
 		setIsEpdValid(null);
-	}, [setStatus, setMarkdown, setMessages, setJsonOut, setValidation]);
+	}, [setStatus, setMarkdown, setMessages, setJsonOut, setValidation, setStreamingText]);
 
 	const models = createListCollection({
 		items: [
-			{ label: "Llama Maverick (r-chat)", value: "Llama-4-Maverick-17B-128E-Instruct-FP8" },
-			{ label: "GPT OSS (r-chat)", value: "gpt-oss-120b" },
-			{ label: "Nemotron (r-chat)", value: "NVIDIA-Nemotron-3-Super-120B-A12B-FP8" },
+			{ label: "Llama-4 Maverick 17B (r-chat)", value: "Llama-4-Maverick-17B-128E-Instruct-FP8", backend: "rchat" },
+			{ label: "GPT OSS 120b (r-chat)", value: "gpt-oss-120b", backend: "rchat" },
+			{ label: "Nemotron-3 Super 120B (r-chat)", value: "NVIDIA-Nemotron-3-Super-120B-A12B-FP8", backend: "rchat" },
+			{ label: "Gemma 4 31B (r-chat)", value: "gemma-4-31B-it", backend: "rchat" },
+			{ label: "Gemini 2.5 Flash (Vertex)", value: "google/gemini-2.5-flash", backend: "vertex" },
+			// { label: "Claude Opus 4.6 (Vertex)", value: "anthropic/claude-opus-4-6", backend: "vertex" },
 		],
 	});
 
@@ -157,8 +183,8 @@ const Sidebar = ({
 					size="lg"
 					width={264}
 					colorPalette="white"
-					value={selectedModel}
-					onValueChange={(e) => setSelectedModel(e.value)}
+					value={[selectedModel]}
+					onValueChange={(e) => onModelChange(e)}
 				>
 					<Select.HiddenSelect />
 					<Select.Label>Select Model</Select.Label>
@@ -196,7 +222,7 @@ const Sidebar = ({
 					const files = uploads.acceptedFiles;
 					const list = Array?.isArray(files) ? files : Array?.from(files ?? []);
 					if (!list.length) return;
-					void onFileChange(selectedModel[0], list);
+					void onFileChange(selectedModel, list);
 				}}
 			>
 				<FileUpload.HiddenInput accept=".pdf,.htm,.html" />
