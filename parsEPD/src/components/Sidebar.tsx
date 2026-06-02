@@ -85,26 +85,16 @@ const Sidebar = ({
 
 				addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
 
-				const validity = await validateEPD({ ...llmParams, model: selectedModel, backend }, safeText, model, backend);
-				setIsEpdValid(validity);
+				const raw = await validateEPD({ ...llmParams, model: selectedModel, backend }, safeText, model, backend);
+				const validity = typeof raw === "string" ? JSON.parse(raw) : raw;
+				const { is_epd, category, epd_count } = validity;
+				setIsEpdValid(is_epd);
 				setStatus(validity ? "extracting" : "error");
 				addMsg({ role: "assistant", content: `${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
-				if (validity) {
-					const product_category = await identifyPC(
-						{ ...llmParams, model: selectedModel, backend },
-						safeText,
-						model,
-						backend,
-					);
-					addMsg({ role: "assistant", content: `Product Category: ${product_category}` });
-					const number_of_products = await identifyProductNumbers(
-						{ ...llmParams, model: selectedModel, backend },
-						safeText,
-						model,
-						backend,
-					);
-					addMsg({ role: "assistant", content: `Number of Products: ${number_of_products}` });
-					const specs_data = identifySpecs(product_category);
+				if (validity?.is_epd) {
+					addMsg({ role: "assistant", content: `Product Category: ${category}` });
+					addMsg({ role: "assistant", content: `Number of Products: ${epd_count}` });
+					const specs_data = identifySpecs(category);
 					await extractJSON(
 						{ ...{ ...llmParams, model: selectedModel, backend }, ajv, openEPDSchema },
 						safeText,

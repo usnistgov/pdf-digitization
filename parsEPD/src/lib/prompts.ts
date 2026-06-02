@@ -50,10 +50,79 @@ Presence of environmental data alone is not sufficient. An EPD must be a formal 
 Task:
 Respond with ' ✅VALID EPD' if the document meets EPD requirements, or '❌ NOT AN EPD' if it does not.
 `;
-// Then, in 1-2 sentences, explain your reasoning by citing specific indicators from the text.
 
 export const category_prompt = `You are classifying Environmental Product Declarations (EPDs). From the provided EPD markdown, identify the most specific product category.
 Examples of categories: "Ready Mix Concrete", "Asphalt", "Cement","Gypsum". Return only the product category. If unclear, return "Unknown".`;
+
+export const epd_analysis_prompt = `You are an expert validator and classifier of Environmental Product Declarations (EPDs). Analyze the provided document and perform three tasks: (1) validate whether it qualifies as an EPD, (2) if valid, identify its product category, and (3) count how many distinct EPDs the document contains.
+
+## Task 1: EPD Validation
+
+An Environmental Product Declaration (EPD) is a standardized, third-party verified document. To qualify as an EPD, the document MUST contain explicit evidence of ALL of the following:
+
+1. **Standards Compliance**: References to ISO 14025 and/or EN 15804 (or equivalent regional standards such as ISO 21930 for construction products).
+2. **Product Category Rule (PCR)**: A named, valid PCR that the EPD follows.
+3. **Declared/Functional Unit**: An explicitly stated declared unit or functional unit (e.g., "1 m³ of concrete", "1 kg of product").
+4. **Quantified LCIA Indicators**: Numerical life cycle impact assessment results (e.g., GWP, ODP, AP, EP, POCP, ADP).
+5. **Program Operator**: A named EPD program operator (e.g., EPD International, IBU, UL Environment, ASTM, NSF).
+6. **Third-Party Verification**: An explicit verification statement naming the independent verifier.
+7. **Validity Period & Issue Date**: A clearly stated issue date AND expiration/validity period.
+
+### Documents that are NOT EPDs (reject these):
+- Life Cycle Assessment (LCA) reports or background studies
+- Technical data sheets or specification documents
+- Product brochures or marketing materials
+- Sustainability reports or corporate ESG disclosures
+- Research papers or academic studies
+- Carbon footprint declarations without full EPD structure
+- Draft or unverified environmental claims
+
+**Important**: The mere presence of environmental data, sustainability language, or LCA results is NOT sufficient. The document must be a formal, verified declaration with the explicit EPD structure and identifiers listed above. When in doubt, reject.
+
+## Task 2: Product Category Classification
+
+If — and only if — the document is a valid EPD, identify the most specific product category it covers.
+
+Guidelines:
+- Use concise, industry-standard category names (e.g., "Ready Mix Concrete", "Portland Cement", "Hot Mix Asphalt", "Gypsum Wallboard", "Structural Steel", "Flat Glass", "Mineral Wool Insulation", "Ceramic Tile").
+- Prefer the most specific category supported by the document over a broad one (e.g., "Ready Mix Concrete" rather than "Concrete"; "Type I/II Portland Cement" rather than "Cement" when specified).
+- If multiple EPDs in the document cover different categories, return the broadest category that accurately covers all of them.
+- If the product type is genuinely ambiguous or not clearly stated, return "Unknown".
+
+## Task 3: EPD Count
+
+Count the number of distinct EPDs contained in the document. A single file may contain one EPD or bundle multiple EPDs together.
+
+Guidelines for counting:
+- Count **each distinct declared product** that has its own complete EPD structure (its own declared unit, its own LCIA results, and its own verification scope).
+- Multiple product variants (e.g., different concrete mix designs, different strength grades, different thicknesses) reported as **separate declarations with separate impact results** count as separate EPDs.
+- Multiple variants reported within a **single declaration** (e.g., one EPD covering a product family with a results table comparing variants under one verification statement) count as **1 EPD**.
+- Sector/industry-average EPDs covering multiple manufacturers but issued as one declaration count as **1 EPD**.
+- If the document is not a valid EPD, return 0.
+
+Return only the integer count.
+
+## Output Format
+
+Respond with a single valid JSON object and nothing else — no markdown fences, no commentary, no prose before or after.
+
+Schema:
+{
+  "is_epd": boolean,
+  "category": string | null,
+  "epd_count": integer,
+}
+
+Field rules:
+- "is_epd": true if the document meets all EPD requirements, false otherwise.
+- "category": the product category string when is_epd is true; null when is_epd is false.
+- "epd_count": the integer number of distinct EPDs in the document (0 when is_epd is false).
+
+Examples:
+
+{"is_epd": true, "category": "Ready Mix Concrete", "epd_count": 1}
+{"is_epd": true, "category": "Portland Cement", "epd_count": 4}
+{"is_epd": false, "category": null, "epd_count": 0`;
 
 export const extraction_prompt = `Please extract and structure the following key information from this Environmental Product Declaration (EPD) document:\n\n1. Product Information:\n   - Product name\n   - Manufacturer/Producer\n   - 
 Product category\n

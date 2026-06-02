@@ -1,6 +1,12 @@
 import { jsonrepair } from "jsonrepair";
 import { chatCompletion } from "./llm";
-import { category_prompt, extraction_prompt_json, filecheck_prompt, system_prompt } from "./prompts";
+import {
+	category_prompt,
+	epd_analysis_prompt,
+	extraction_prompt_json,
+	filecheck_prompt,
+	system_prompt,
+} from "./prompts";
 import specs from "./specs";
 
 interface CallLLMParams {
@@ -9,12 +15,18 @@ interface CallLLMParams {
 	backend: string;
 }
 
+interface ValidateEPDResult {
+	is_epd: boolean;
+	category: string;
+	epd_count: Number;
+}
+
 const callLLM = async (
 	params: CallLLMParams,
 	systemPrompt: string[],
 	userPrompt: string,
 	backend: string,
-): Promise<string> => {
+): Promise<ValidateEPDResult> => {
 	const instructions = systemPrompt.map((prompt) => {
 		return { role: "system", content: prompt };
 	});
@@ -36,12 +48,10 @@ export const validateEPD = async (
 	safeText: string,
 	model: string,
 	backend: string,
-): Promise<boolean> => {
+): Promise<ValidateEPDResult> => {
 	console.log("Validating EPD...");
-	// console.log(system_prompt(safeText));
-	const reply = await callLLM(params, [system_prompt(safeText), filecheck_prompt], safeText, backend);
-	const ok = /valid epd/i.test(reply);
-	return ok;
+	const reply: ValidateEPDResult = await callLLM(params, [epd_analysis_prompt], safeText, backend);
+	return reply;
 };
 
 export const identifyPC = async (
@@ -51,7 +61,7 @@ export const identifyPC = async (
 	backend: string,
 ): Promise<string> => {
 	console.log("Identifying product category...");
-	const reply = await callLLM(params, [system_prompt(safeText), category_prompt], safeText, backend);
+	const reply = await callLLM(params, [category_prompt], safeText, backend);
 	console.log(reply);
 	return reply;
 };
