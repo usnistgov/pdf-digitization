@@ -14,7 +14,7 @@ import {
 } from "@chakra-ui/react";
 import { useCallback, useState } from "react";
 import { LuArrowDownToLine, LuRefreshCw, LuUpload } from "react-icons/lu";
-import { extractJSON, identifyPC, identifyProductNumbers, identifySpecs, validateEPD } from "../lib/functions";
+import { extractJSON, identifySpecs, validateEPD } from "../lib/functions";
 import { guardDocumentForLLM } from "../lib/guards";
 import { htmlToMarkdown, pdfToMarkdown } from "../lib/pdf";
 import { SidebarProps } from "../lib/types";
@@ -47,7 +47,7 @@ const Sidebar = ({
 	const llmParams = { apiUrl };
 
 	const onFileChange = useCallback(
-		async (model: string, files: File[]) => {
+		async (files: File[]) => {
 			const f = Array.isArray(files) ? files?.[0] : (files as any)?.item?.(0);
 			if (!f) return;
 			console.log("file changed");
@@ -85,12 +85,15 @@ const Sidebar = ({
 
 				addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
 
-				const raw = await validateEPD({ ...llmParams, model: selectedModel, backend }, safeText, model, backend);
+				const raw = await validateEPD({ ...llmParams, model: selectedModel, backend }, safeText);
 				const validity = typeof raw === "string" ? JSON.parse(raw) : raw;
-				const { is_epd, category, epd_count } = validity;
+				const { is_epd, category, epd_count, products } = validity;
+
 				setIsEpdValid(is_epd);
-				setStatus(validity ? "extracting" : "error");
+				setStatus(is_epd ? "extracting" : "error");
+
 				addMsg({ role: "assistant", content: `${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
+
 				if (validity?.is_epd) {
 					addMsg({ role: "assistant", content: `Product Category: ${category}` });
 					addMsg({ role: "assistant", content: `Number of Products: ${epd_count}` });
@@ -104,8 +107,7 @@ const Sidebar = ({
 							addMsg,
 							setValidation,
 						},
-						model,
-						backend,
+						{ count: Number(epd_count) || (products?.length ?? 1), names: products },
 					);
 				}
 				setStatus("done");
@@ -124,6 +126,8 @@ const Sidebar = ({
 			llmParams,
 			ajv,
 			openEPDSchema,
+			selectedModel,
+			backend,
 		],
 	);
 
@@ -202,7 +206,7 @@ const Sidebar = ({
 					const files = uploads.acceptedFiles;
 					const list = Array?.isArray(files) ? files : Array?.from(files ?? []);
 					if (!list.length) return;
-					void onFileChange(selectedModel, list);
+					void onFileChange(list);
 				}}
 			>
 				<FileUpload.HiddenInput accept=".pdf,.htm,.html" />
