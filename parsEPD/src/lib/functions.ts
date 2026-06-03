@@ -37,7 +37,8 @@ const callLLM = async (params: CallLLMParams, systemPrompts: string[], userPromp
 
 export const validateEPD = async (params: CallLLMParams, safeText: string) => {
 	console.log("Validating EPD...");
-	return callLLM(params, [epd_analysis_prompt], safeText);
+	let reply = await callLLM(params, [epd_analysis_prompt], safeText);
+	return parseFirstObject(reply, "EPD analysis");
 };
 
 export const identifySpecs = (product_category: string) => {
@@ -103,8 +104,7 @@ export const extractJSON = async (
 		name: names[i],
 	}));
 
-	// One focused call per product: always yields `count` objects and never
-	// produces a response large enough to truncate.
+	// One focused call per product: always yields `count` objects and never produces a response large enough to truncate.
 	const settled = await Promise.allSettled(targets.map((t) => extractOneProduct(params, safeText, specs, t)));
 
 	// const reply = await callLLM(params, [extraction_prompt_json(specs)], `<epd_content>\n${safeText}\n</epd_content>`);
