@@ -193,17 +193,16 @@ export default function App() {
 						)}
 
 						{jsonOut && Array.isArray(jsonOut) && (
-							<Tabs.Root mt={5}>
+							<Tabs.Root mt={5} defaultValue={"0"} lazyMount>
 								<Tabs.List>
-									{jsonOut.map((_, index) => (
+									{jsonOut.map((item, index) => (
 										<Tabs.Trigger key={index} value={index.toString()}>
-											Item {index + 1}
+											{item?.product_name && item.product_name !== "--" ? item.product_name : `Product ${index + 1}`}
 										</Tabs.Trigger>
 									))}
 								</Tabs.List>
 								{jsonOut.map((item, index) => (
 									<Tabs.Content key={index} value={index.toString()}>
-										{/* <pre>{JSON.stringify(item, null, 2)}</pre> */}
 										<JsonEditor
 											data={item}
 											restrictEdit={true}
@@ -214,25 +213,11 @@ export default function App() {
 											rootName="openEPD"
 											theme={githubDarkTheme}
 											maxWidth={"100%"}
-											defaultValue={1}
 										/>
 									</Tabs.Content>
 								))}
 							</Tabs.Root>
 						)}
-						{/* {jsonOut && (
-							<JsonEditor
-								data={jsonOut}
-								restrictEdit={true}
-								restrictDelete={true}
-								restrictAdd={true}
-								viewOnly={true}
-								collapse={1}
-								rootName="openEPD"
-								theme={githubDarkTheme}
-								maxWidth={"100%"}
-							/>
-						)} */}
 
 						{validation && (
 							<Container border={"1px"} borderColor={"gray.200"} borderRadius={10} mt={5}>
