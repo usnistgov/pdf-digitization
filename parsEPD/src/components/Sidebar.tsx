@@ -112,6 +112,8 @@ const Sidebar = ({
 				}
 				setStatus("done");
 			} catch (e: any) {
+				console.error(e.message);
+				addMsg({ role: "assistant", content: e.message });
 				setStatus("error");
 			}
 		},
