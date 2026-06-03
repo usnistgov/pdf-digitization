@@ -43,6 +43,7 @@ export async function chatCompletion(opts: {
 			max_tokens,
 			top_p,
 			backend,
+			stream: true,
 		}),
 	});
 
@@ -50,6 +51,31 @@ export async function chatCompletion(opts: {
 		const text = await res.text();
 		throw new Error(`LLM proxy error ${res.status}: ${text}`);
 	}
-	const json = await res.json();
-	return json?.choices?.[0]?.message?.content ?? "";
+
+	const reader = res.body!.getReader();
+	const decoder = new TextDecoder();
+	let content = "";
+	let buf = "";
+
+	while (true) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		buf += decoder.decode(value, { stream: true });
+
+		const lines = buf.split("\n");
+		buf = lines.pop()!;
+
+		for (const line of lines) {
+			if (!line.startsWith("data:")) continue;
+			const data = line.slice(5).trim();
+			if (data === "[DONE]") continue;
+			try {
+				const parsed = JSON.parse(data);
+				const delta = parsed.choices?.[0]?.delta?.content;
+				if (delta) content += delta;
+			} catch {}
+		}
+	}
+
+	return content;
 }
