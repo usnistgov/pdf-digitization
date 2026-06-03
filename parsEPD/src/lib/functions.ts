@@ -1,7 +1,7 @@
 import { jsonrepair } from "jsonrepair";
 import { chatCompletion } from "./llm";
 import openEPDSchema from "./openepd_validation_schema.json";
-import { epd_analysis_prompt, extraction_prompt_json, extraction_prompt_json_single } from "./prompts";
+import { epd_analysis_prompt, extraction_prompt_json_single } from "./prompts";
 import specs from "./specs";
 
 interface CallLLMParams {
@@ -24,7 +24,6 @@ interface ExtractJSONParams extends CallLLMParams {
 
 const callLLM = async (params: CallLLMParams, systemPrompts: string[], userPrompt: string): Promise<string> => {
 	const instructions = systemPrompts.map((prompt) => ({ role: "system", content: prompt }));
-	console.log(params);
 	return chatCompletion({
 		apiUrl: params.apiUrl,
 		model: params.model,
@@ -107,8 +106,6 @@ export const extractJSON = async (
 	// One focused call per product: always yields `count` objects and never produces a response large enough to truncate.
 	const settled = await Promise.allSettled(targets.map((t) => extractOneProduct(params, safeText, specs, t)));
 
-	// const reply = await callLLM(params, [extraction_prompt_json(specs)], `<epd_content>\n${safeText}\n</epd_content>`);
-
 	const arr: any[] = [];
 	settled.forEach((r, i) => {
 		if (r.status === "fulfilled") {
@@ -131,36 +128,12 @@ export const extractJSON = async (
 		});
 	}
 
-	// Extract [...] array then repair any truncated/malformed JSON
-	// const match = reply.match(/\[[\s\S]*\]/);
-	// if (!match) throw new Error("No JSON array found in model output.");
-
-	// let arr: any[];
-	// try {
-	// 	const parsed = JSON.parse(jsonrepair(match[0]));
-	// 	arr = Array.isArray(parsed) ? parsed : [parsed];
-	// } catch (parseError: any) {
-	// 	console.error("JSON Parse Error:", parseError);
-	// 	throw new Error(`Failed to parse JSON: ${parseError.message}`);
-	// }
-
 	setJsonOut(arr);
 	addMsg({ role: "assistant", content: "✅ openEPD JSON generated." });
 	addMsg({ role: "assistant", content: "Validating openEPD schema." });
 
 	try {
 		const validate = params.ajv.compile(params.openEPDSchema);
-		// const allErrors: string[] = [];
-
-		// for (const obj of arr) {
-		// 	const valid = validate(obj);
-		// 	if (!valid) {
-		// 		console.log("AJV Validation Errors:", validate.errors);
-		// 		validate.errors?.forEach((err: any) => {
-		// 			allErrors.push(`${err.instancePath || "root"}: ${err.message} (received: ${JSON.stringify(err.data)})`);
-		// 		});
-		// 	}
-		// }
 
 		const errors = arr.flatMap((obj) =>
 			validate(obj)

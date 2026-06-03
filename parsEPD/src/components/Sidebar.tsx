@@ -19,6 +19,16 @@ import { guardDocumentForLLM } from "../lib/guards";
 import { htmlToMarkdown, pdfToMarkdown } from "../lib/pdf";
 import { SidebarProps } from "../lib/types";
 
+const models = createListCollection({
+	items: [
+		{ label: "Llama Maverick (r-chat)", value: "Llama-4-Maverick-17B-128E-Instruct-FP8", backend: "rchat" },
+		{ label: "GPT OSS (r-chat)", value: "gpt-oss-120b", backend: "rchat" },
+		{ label: "Nemotron (r-chat)", value: "NVIDIA-Nemotron-3-Super-120B-A12B-FP8", backend: "rchat" },
+		{ label: "Gemini 2.5 Flash (Vertex)", value: "google/gemini-2.5-flash", backend: "vertex" },
+		{ label: "Claude Opus 4.6 (Vertex)", value: "anthropic/claude-opus-4-6", backend: "vertex" },
+	],
+});
+
 const Sidebar = ({
 	apiUrl,
 	status,
@@ -35,13 +45,28 @@ const Sidebar = ({
 	jsonOut,
 }: SidebarProps) => {
 	const [uploadKey, setUploadKey] = useState(0);
-	const [selectedModel, setSelectedModel] = useState<string>("Llama-4-Maverick-17B-128E-Instruct-FP8");
+	const [model, setModel] = useState<string>("Llama-4-Maverick-17B-128E-Instruct-FP8");
 	const [backend, setBackend] = useState<string>("rchat");
+
+	const resetState = useCallback(() => {
+		setMarkdown("");
+		setMessages([]);
+		setValidation("");
+		setJsonOut(null);
+		setIsEpdValid(null);
+	}, [setMarkdown, setMessages, setValidation, setJsonOut, setIsEpdValid]);
 
 	const onModelChange = (e: { value: string[]; items: { label: string; value: string; backend: string }[] }) => {
 		const model = e.items[0];
-		setSelectedModel(model.value);
+		setModel(model.value);
 		setBackend(model.backend);
+	};
+
+	const extractMarkdown = async (f: File): Promise<string> => {
+		const ext = f.name.toLowerCase().split(".").pop();
+		if (ext === "pdf") return pdfToMarkdown(await f.arrayBuffer());
+		if (ext === "html" || ext === "htm") return htmlToMarkdown(await f.text());
+		throw new Error("Please upload PDF or HTML.");
 	};
 
 	const llmParams = { apiUrl };
@@ -53,23 +78,14 @@ const Sidebar = ({
 			console.log("file changed");
 			try {
 				setStatus("extracting");
+				resetState();
 
-				// reset state on file upload
-				setMarkdown("");
-				setMessages([]);
-				setValidation("");
-				setJsonOut(null);
-				setIsEpdValid(null);
-
-				const ext = f.name.toLowerCase().split(".").pop();
-				let md = "";
-
-				if (ext === "pdf") {
-					md = await pdfToMarkdown(await f.arrayBuffer());
-				} else if (ext === "html" || ext === "htm") {
-					md = htmlToMarkdown(await f.text());
-				} else {
-					alert("Please upload PDF or HTML.");
+				let md: string;
+				try {
+					md = await extractMarkdown(f);
+				} catch (err: any) {
+					alert(err.message);
+					setStatus("idle");
 					return;
 				}
 				addMsg({ role: "system", content: "Markdown extracted." });
@@ -85,7 +101,8 @@ const Sidebar = ({
 
 				addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
 
-				const raw = await validateEPD({ ...llmParams, model: selectedModel, backend }, safeText);
+				const params = { apiUrl, model, backend };
+				const raw = await validateEPD(params, safeText);
 				const validity = typeof raw === "string" ? JSON.parse(raw) : raw;
 				const { is_epd, category, epd_count, products } = validity;
 
@@ -99,7 +116,7 @@ const Sidebar = ({
 					addMsg({ role: "assistant", content: `Number of Products: ${epd_count}` });
 					const specs_data = identifySpecs(category);
 					await extractJSON(
-						{ ...{ ...llmParams, model: selectedModel, backend }, ajv, openEPDSchema },
+						{ ...params, ajv, openEPDSchema },
 						safeText,
 						specs_data,
 						{
@@ -128,7 +145,7 @@ const Sidebar = ({
 			llmParams,
 			ajv,
 			openEPDSchema,
-			selectedModel,
+			model,
 			backend,
 		],
 	);
@@ -136,22 +153,10 @@ const Sidebar = ({
 	const onStartOver = useCallback(() => {
 		setStatus("idle");
 		setUploadKey((k) => k + 1);
-		setMarkdown("");
-		setMessages([]);
-		setJsonOut(null);
-		setValidation("");
-		setIsEpdValid(null);
-	}, [setStatus, setMarkdown, setMessages, setJsonOut, setValidation]);
+		resetState();
+	}, [setStatus, resetState]);
 
-	const models = createListCollection({
-		items: [
-			{ label: "Llama Maverick (r-chat)", value: "Llama-4-Maverick-17B-128E-Instruct-FP8", backend: "rchat" },
-			{ label: "GPT OSS (r-chat)", value: "gpt-oss-120b", backend: "rchat" },
-			{ label: "Nemotron (r-chat)", value: "NVIDIA-Nemotron-3-Super-120B-A12B-FP8", backend: "rchat" },
-			{ label: "Gemini 2.5 Flash (Vertex)", value: "google/gemini-2.5-flash", backend: "vertex" },
-			{ label: "Claude Opus 4.6 (Vertex)", value: "anthropic/claude-opus-4-6", backend: "vertex" },
-		],
-	});
+	const canStartOver = status === "done" || status === "error";
 
 	return (
 		<Container maxW={"20vw"} m={0} p={10}>
@@ -169,7 +174,7 @@ const Sidebar = ({
 					size="lg"
 					width={264}
 					colorPalette="white"
-					value={[selectedModel]}
+					value={[model]}
 					onValueChange={(e) => onModelChange(e)}
 				>
 					<Select.HiddenSelect />
@@ -185,9 +190,9 @@ const Sidebar = ({
 					<Portal>
 						<Select.Positioner>
 							<Select.Content>
-								{models.items.map((models) => (
-									<Select.Item item={models} key={models.value}>
-										{models.label}
+								{models.items.map((m) => (
+									<Select.Item item={m} key={m.value}>
+										{m.label}
 										<Select.ItemIndicator />
 									</Select.Item>
 								))}
@@ -222,14 +227,7 @@ const Sidebar = ({
 			<Flex direction={"column"}>
 				<Dialog.Root placement={"center"} motionPreset="slide-in-bottom" role="alertdialog">
 					<Dialog.Trigger asChild>
-						<Button
-							variant="solid"
-							size="lg"
-							color={"teal"}
-							mt={5}
-							disabled={!(status === "done" || status === "error")}
-							width={264}
-						>
+						<Button variant="solid" size="lg" color={"teal"} mt={5} disabled={!canStartOver} width={264}>
 							<LuRefreshCw />
 							Start Over
 						</Button>
