@@ -51,7 +51,7 @@ const Sidebar = ({
 	const resetState = useCallback(() => {
 		setMarkdown("");
 		setMessages([]);
-		setValidation("");
+		setValidation([]);
 		setJsonOut(null);
 		setIsEpdValid(null);
 	}, [setMarkdown, setMessages, setValidation, setJsonOut, setIsEpdValid]);

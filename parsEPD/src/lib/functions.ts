@@ -88,7 +88,7 @@ export const extractJSON = async (
 	callbacks: {
 		setJsonOut: (obj: any) => void;
 		addMsg: (msg: { role: string; content: string }) => void;
-		setValidation: (msg: string) => void;
+		setValidation: (v: { valid: boolean; errors: string[] }[]) => void;
 	},
 	expected: { count: number; names?: string[] } = { count: 1 },
 ): Promise<void> => {
@@ -141,24 +141,27 @@ export const extractJSON = async (
 	try {
 		const validate = params.ajv.compile(params.openEPDSchema);
 
-		const errors = arr.flatMap((obj) =>
-			validate(obj)
+		const results = arr.map((obj) => {
+			const valid = validate(obj) as boolean;
+			const errors = valid
 				? []
 				: (validate.errors ?? []).map(
 						(err: any) => `${err.instancePath || "root"}: ${err.message} (received: ${JSON.stringify(err.data)})`,
-					),
-		);
+					);
+			return { valid, errors };
+		});
 
-		if (errors.length > 0) {
-			setValidation(`⚠️ Schema validation warning:\n${errors.join("\n")}`);
+		setValidation(results);
+
+		const anyInvalid = results.some((r) => !r.valid);
+		if (anyInvalid) {
 			addMsg({ role: "assistant", content: `⚠️ Schema validation warning. Verify output.` });
 		} else {
-			setValidation("✅ JSON is valid according to the schema.");
 			addMsg({ role: "assistant", content: "✅ openEPD JSON validated." });
 		}
 	} catch (schemaError: any) {
 		console.error("Schema Compilation Error:", schemaError);
-		setValidation(`❌ Schema error: ${schemaError.message}`);
+		setValidation(arr.map(() => ({ valid: false, errors: [`Schema error: ${schemaError.message}`] })));
 		addMsg({ role: "assistant", content: "❌ Schema compilation failed." });
 	}
 

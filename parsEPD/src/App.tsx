@@ -7,6 +7,7 @@ import {
 	Container,
 	Flex,
 	HStack,
+	List,
 	ScrollArea,
 	Spinner,
 	Tabs,
@@ -25,7 +26,7 @@ import Nav from "./components/Navigation";
 import Sidebar from "./components/Sidebar";
 
 import { strToU8, zipSync } from "fflate";
-import { ChatMessage, Status } from "./lib/types";
+import { ChatMessage, Status, ValidationResult } from "./lib/types";
 
 import openEPDSchema from "../src/lib/openepd_validation_schema.json";
 import Disclaimer from "./components/Disclaimer";
@@ -50,7 +51,7 @@ export default function App() {
 	const [markdown, setMarkdown] = useState<string>("");
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [jsonOut, setJsonOut] = useState<any>(null);
-	const [validation, setValidation] = useState<string>("");
+	const [validation, setValidation] = useState<ValidationResult[]>([]);
 
 	useEffect(() => {
 		localStorage.setItem("pars_api_url", apiUrl);
@@ -72,7 +73,9 @@ export default function App() {
 		const files: Record<string, Uint8Array> = {};
 		arr.forEach((product: any, i: number) => {
 			const name = product?.name ?? product?.product_name ?? `product_${i + 1}`;
-			const safe = String(name).replace(/[^a-zA-Z0-9_\-]/g, "_").slice(0, 80);
+			const safe = String(name)
+				.replace(/[^a-zA-Z0-9_\-]/g, "_")
+				.slice(0, 80);
 			files[`${safe}.json`] = strToU8(JSON.stringify(product, null, 2));
 		});
 		const zipped = zipSync(files);
@@ -210,28 +213,42 @@ export default function App() {
 										</Tabs.Trigger>
 									))}
 								</Tabs.List>
-								{jsonOut.map((item, index) => (
-									<Tabs.Content key={index} value={index.toString()}>
-										<JsonEditor
-											data={item}
-											restrictEdit={true}
-											restrictDelete={true}
-											restrictAdd={true}
-											viewOnly={true}
-											collapse={1}
-											rootName="openEPD"
-											theme={githubDarkTheme}
-											maxWidth={"100%"}
-										/>
-									</Tabs.Content>
-								))}
+								{jsonOut.map((item, index: number) => {
+									const vr = validation[index];
+									return (
+										<Tabs.Content key={index} value={index.toString()}>
+											<JsonEditor
+												data={item}
+												restrictEdit={true}
+												restrictDelete={true}
+												restrictAdd={true}
+												viewOnly={true}
+												collapse={1}
+												rootName="openEPD"
+												theme={githubDarkTheme}
+												maxWidth={"100%"}
+											/>
+											{vr && (
+												<Container
+													border={"1px"}
+													borderColor={vr.valid ? "green.600" : "yellow.600"}
+													borderRadius={10}
+													mt={3}
+													mb={3}
+													p={3}
+												>
+													<Text fontWeight={"bold"} color={vr.valid ? "green.400" : "yellow.400"}>
+														{vr.valid ? "✅ Schema valid" : "⚠️ Schema validation warnings"}
+													</Text>
+													<List.Root>
+														{!vr.valid && vr.errors.map((e, i) => <List.Item key={i}>{e}</List.Item>)}
+													</List.Root>
+												</Container>
+											)}
+										</Tabs.Content>
+									);
+								})}
 							</Tabs.Root>
-						)}
-
-						{validation && (
-							<Container border={"1px"} borderColor={"gray.200"} borderRadius={10} mt={5}>
-								<strong>{validation}</strong>
-							</Container>
 						)}
 					</Container>
 				</Flex>
