@@ -264,7 +264,7 @@ const Sidebar = ({
 				</Dialog.Root>
 
 				<Button color="teal" variant="solid" onClick={downloadJSON} disabled={!jsonOut} mt={5} size={"lg"} width={264}>
-					<LuArrowDownToLine /> Download JSON
+					<LuArrowDownToLine /> Download ZIP
 				</Button>
 			</Flex>
 		</Container>

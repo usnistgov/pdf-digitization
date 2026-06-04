@@ -24,6 +24,7 @@ import Header from "./components/Header";
 import Nav from "./components/Navigation";
 import Sidebar from "./components/Sidebar";
 
+import { strToU8, zipSync } from "fflate";
 import { ChatMessage, Status } from "./lib/types";
 
 import openEPDSchema from "../src/lib/openepd_validation_schema.json";
@@ -67,11 +68,19 @@ export default function App() {
 
 	const downloadJSON = () => {
 		if (!jsonOut) return;
-		const blob = new Blob([JSON.stringify(jsonOut, null, 2)], { type: "application/json" });
+		const arr = Array.isArray(jsonOut) ? jsonOut : [jsonOut];
+		const files: Record<string, Uint8Array> = {};
+		arr.forEach((product: any, i: number) => {
+			const name = product?.name ?? product?.product_name ?? `product_${i + 1}`;
+			const safe = String(name).replace(/[^a-zA-Z0-9_\-]/g, "_").slice(0, 80);
+			files[`${safe}.json`] = strToU8(JSON.stringify(product, null, 2));
+		});
+		const zipped = zipSync(files);
+		const blob = new Blob([zipped], { type: "application/zip" });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement("a");
 		a.href = url;
-		a.download = "openepd.json";
+		a.download = "openepd.zip";
 		a.click();
 		URL.revokeObjectURL(url);
 	};
@@ -159,7 +168,7 @@ export default function App() {
 									{jsonOut && (
 										<Flex justifyContent="flex-end" flexGrow={1}>
 											<Button color="teal" variant="solid" onClick={downloadJSON} disabled={!jsonOut}>
-												<LuArrowDownToLine /> Download JSON
+												<LuArrowDownToLine /> Download ZIP
 											</Button>
 										</Flex>
 									)}
