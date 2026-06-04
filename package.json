@@ -1,0 +1,17 @@
+{
+	"name": "pdf-digitization",
+	"version": "1.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "concurrently -n backend,frontend -c blue,green \"npm run dev -w backend\" \"npm run dev -w parsEPD\"",
+		"dev:backend": "npm run dev -w backend",
+		"dev:frontend": "npm run dev -w parsEPD"
+	},
+	"workspaces": [
+		"backend",
+		"parsEPD"
+	],
+	"devDependencies": {
+		"concurrently": "^9.1.2"
+	}
+}
