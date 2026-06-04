@@ -154,7 +154,7 @@ const pipeOAIStream = async (upstream, clientRes) => {
 	}
 };
 
-const streamRChat = async (model, messages, temperature, max_tokens, top_p, clientRes) => {
+const streamRChat = async (model, messages, temperature, max_tokens, top_p, response_format, clientRes) => {
 	const apiUrl = process.env.VITE_LLM_URL;
 	const apiKey = process.env.VITE_RCHAT_API_KEY;
 	if (!apiUrl) throw new Error("LLM_API_URL not configured");
@@ -166,7 +166,7 @@ const streamRChat = async (model, messages, temperature, max_tokens, top_p, clie
 			"Content-Type": "application/json",
 			Authorization: `Bearer ${apiKey}`,
 		},
-		body: JSON.stringify({ model, messages, temperature, max_tokens, top_p, stream: true }),
+		body: JSON.stringify({ model, messages, temperature, max_tokens, top_p, stream: true, ...(response_format && { response_format }) }),
 	});
 	if (!upstream.ok) throw new Error(`RChat error ${upstream.status}: ${await upstream.text()}`);
 	await pipeOAIStream(upstream, clientRes);
@@ -277,6 +277,7 @@ app.post("/chat/completions", async (req, res) => {
 			top_p = 1,
 			backend = "rchat",
 			stream = true,
+			response_format,
 		} = req.body;
 		console.log(model, backend, stream ? "(streaming)" : "");
 
@@ -290,7 +291,7 @@ app.post("/chat/completions", async (req, res) => {
 					? await streamVertexClaude(model, messages, temperature, max_tokens, res)
 					: await streamVertexGemini(model, messages, temperature, max_tokens, res);
 			} else {
-				await streamRChat(model, messages, temperature, max_tokens, top_p, res);
+				await streamRChat(model, messages, temperature, max_tokens, top_p, response_format, res);
 			}
 			return;
 		}

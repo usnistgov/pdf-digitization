@@ -8,6 +8,7 @@ interface CallLLMParams {
 	apiUrl: string;
 	model: string;
 	backend: string;
+	response_format?: { type: string; json_schema?: any };
 }
 
 interface ValidateEPDResult {
@@ -31,12 +32,17 @@ const callLLM = async (params: CallLLMParams, systemPrompts: string[], userPromp
 		top_p: 1,
 		messages: [...instructions, { role: "user", content: userPrompt }] as any,
 		backend: params.backend,
+		...(params.response_format && { response_format: params.response_format }),
 	});
 };
 
 export const validateEPD = async (params: CallLLMParams, safeText: string) => {
 	console.log("Validating EPD...");
-	let reply = await callLLM(params, [epd_analysis_prompt], safeText);
+	let reply = await callLLM(
+		{ ...params, response_format: { type: "json_object" } },
+		[epd_analysis_prompt],
+		safeText,
+	);
 	return parseFirstObject(reply, "EPD analysis");
 };
 
@@ -68,7 +74,7 @@ const extractOneProduct = async (
 	target: { index: number; total: number; name?: string },
 ): Promise<any> => {
 	const reply = await callLLM(
-		params,
+		{ ...params, response_format: { type: "json_schema", json_schema: { name: "openepd", strict: false, schema: openEPDSchema } } },
 		[extraction_prompt_json_single(openEPDSchema, specs, target)],
 		`<epd_content>\n${safeText}\n</epd_content>`,
 	);

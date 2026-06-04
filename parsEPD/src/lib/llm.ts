@@ -9,8 +9,8 @@ export async function chatCompletion(opts: {
 	max_tokens?: number;
 	top_p: number;
 	backend?: string;
-	// Backend proxy configuration
 	backendUrl?: string;
+	response_format?: { type: string; json_schema?: any };
 }) {
 	const {
 		apiUrl,
@@ -22,6 +22,7 @@ export async function chatCompletion(opts: {
 		top_p = 1,
 		backend = "generic",
 		backendUrl,
+		response_format,
 	} = opts;
 
 	const baseUrl = backendUrl || apiUrl;
@@ -44,6 +45,7 @@ export async function chatCompletion(opts: {
 			top_p,
 			backend,
 			stream: true,
+			...(response_format && { response_format }),
 		}),
 	});
 
