@@ -20,6 +20,10 @@ export type SidebarProps = {
 	setIsEpdValid: (e: any) => void;
 	downloadJSON: () => void;
 	jsonOut: any;
+	model: string;
+	setModel: (m: string) => void;
+	backend: string;
+	setBackend: (b: string) => void;
 
 	// Schema / validator
 	ajv: Ajv;

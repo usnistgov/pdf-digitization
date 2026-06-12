@@ -31,6 +31,14 @@ import { ChatMessage, Status, ValidationResult } from "./lib/types";
 import openEPDSchema from "../src/lib/openepd_validation_schema.json";
 import Disclaimer from "./components/Disclaimer";
 
+const modelLabels: Record<string, string> = {
+	"Llama-4-Maverick-17B-128E-Instruct-FP8": "Llama Maverick (r-chat)",
+	"gpt-oss-120b": "GPT OSS (r-chat)",
+	"NVIDIA-Nemotron-3-Super-120B-A12B-FP8": "Nemotron (r-chat)",
+	"google/gemini-2.5-flash": "Gemini 2.5 Flash (Vertex)",
+	"anthropic/claude-opus-4-6": "Claude Opus 4.6 (Vertex)",
+};
+
 const status_text = {
 	extracting: "Extracting text from EPD...",
 	sanitizing: "Sanitizing extracted text...",
@@ -52,6 +60,8 @@ export default function App() {
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [jsonOut, setJsonOut] = useState<any>(null);
 	const [validation, setValidation] = useState<ValidationResult[]>([]);
+	const [model, setModel] = useState<string>("Llama-4-Maverick-17B-128E-Instruct-FP8");
+	const [backend, setBackend] = useState<string>("rchat");
 
 	useEffect(() => {
 		localStorage.setItem("pars_api_url", apiUrl);
@@ -70,22 +80,31 @@ export default function App() {
 	const downloadJSON = () => {
 		if (!jsonOut) return;
 		const arr = Array.isArray(jsonOut) ? jsonOut : [jsonOut];
-		const files: Record<string, Uint8Array> = {};
-		arr.forEach((product: any, i: number) => {
-			const name = product?.name ?? product?.product_name ?? `product_${i + 1}`;
+		const a = document.createElement("a");
+		if (arr.length === 1) {
+			const product = arr[0];
+			const name = product?.name ?? product?.product_name ?? "product_1";
 			const safe = String(name)
 				.replace(/[^a-zA-Z0-9_\-]/g, "_")
 				.slice(0, 80);
-			files[`${safe}.json`] = strToU8(JSON.stringify(product, null, 2));
-		});
-		const zipped = zipSync(files);
-		const blob = new Blob([zipped], { type: "application/zip" });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = "openepd.zip";
+			const blob = new Blob([JSON.stringify(product, null, 2)], { type: "application/json" });
+			a.href = URL.createObjectURL(blob);
+			a.download = `${safe}_parsEPD.json`;
+		} else {
+			const files: Record<string, Uint8Array> = {};
+			arr.forEach((product: any, i: number) => {
+				const name = product?.name ?? product?.product_name ?? `product_${i + 1}`;
+				const safe = String(name)
+					.replace(/[^a-zA-Z0-9_\-]/g, "_")
+					.slice(0, 80);
+				files[`${safe}.json`] = strToU8(JSON.stringify(product, null, 2));
+			});
+			const blob = new Blob([zipSync(files)], { type: "application/zip" });
+			a.href = URL.createObjectURL(blob);
+			a.download = "parsEPD.zip";
+		}
 		a.click();
-		URL.revokeObjectURL(url);
+		URL.revokeObjectURL(a.href);
 	};
 
 	return (
@@ -108,6 +127,10 @@ export default function App() {
 						setIsEpdValid={setIsEpdValid}
 						jsonOut={jsonOut}
 						downloadJSON={downloadJSON}
+						model={model}
+						setModel={setModel}
+						backend={backend}
+						setBackend={setBackend}
 					/>
 					<Container style={{ padding: "50px 150px", minHeight: "75vh", maxHeight: "75vh", overflowY: "auto" }}>
 						<Header />
@@ -169,9 +192,13 @@ export default function App() {
 										Messages
 									</Text>
 									{jsonOut && (
-										<Flex justifyContent="flex-end" flexGrow={1}>
+										<Flex justifyContent="flex-end" flexGrow={1} alignItems="center" gap={3}>
+											<Text fontSize={"sm"} color={"teal"} fontWeight={"semibold"}>
+												Model: {modelLabels[model] ?? model}
+											</Text>
 											<Button color="teal" variant="solid" onClick={downloadJSON} disabled={!jsonOut}>
-												<LuArrowDownToLine /> Download ZIP
+												<LuArrowDownToLine />
+												{Array.isArray(jsonOut) && jsonOut.length > 1 ? "Download ZIP" : "Download JSON"}
 											</Button>
 										</Flex>
 									)}

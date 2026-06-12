@@ -43,10 +43,12 @@ const Sidebar = ({
 	openEPDSchema,
 	downloadJSON,
 	jsonOut,
+	model,
+	setModel,
+	backend,
+	setBackend,
 }: SidebarProps) => {
 	const [uploadKey, setUploadKey] = useState(0);
-	const [model, setModel] = useState<string>("Llama-4-Maverick-17B-128E-Instruct-FP8");
-	const [backend, setBackend] = useState<string>("rchat");
 	const [pendingModel, setPendingModel] = useState<{ value: string; backend: string } | null>(null);
 	const [modelDialogOpen, setModelDialogOpen] = useState(false);
 	const lastSafeTextRef = useRef<string>("");
