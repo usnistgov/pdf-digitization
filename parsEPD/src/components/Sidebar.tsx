@@ -12,7 +12,7 @@ import {
 	Text,
 	createListCollection,
 } from "@chakra-ui/react";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { LuArrowDownToLine, LuRefreshCw, LuUpload } from "react-icons/lu";
 import { extractJSON, identifySpecs, validateEPD } from "../lib/functions";
 import { guardDocumentForLLM } from "../lib/guards";
@@ -47,6 +47,9 @@ const Sidebar = ({
 	const [uploadKey, setUploadKey] = useState(0);
 	const [model, setModel] = useState<string>("Llama-4-Maverick-17B-128E-Instruct-FP8");
 	const [backend, setBackend] = useState<string>("rchat");
+	const [pendingModel, setPendingModel] = useState<{ value: string; backend: string } | null>(null);
+	const [modelDialogOpen, setModelDialogOpen] = useState(false);
+	const lastSafeTextRef = useRef<string>("");
 
 	const resetState = useCallback(() => {
 		setMarkdown("");
@@ -57,10 +60,73 @@ const Sidebar = ({
 	}, [setMarkdown, setMessages, setValidation, setJsonOut, setIsEpdValid]);
 
 	const onModelChange = (e: { value: string[]; items: { label: string; value: string; backend: string }[] }) => {
-		const model = e.items[0];
-		setModel(model.value);
-		setBackend(model.backend);
+		const m = e.items[0];
+		if (status !== "idle") {
+			setPendingModel({ value: m.value, backend: m.backend });
+			setModelDialogOpen(true);
+		} else {
+			setModel(m.value);
+			setBackend(m.backend);
+		}
 	};
+
+	const runPipeline = useCallback(
+		async (safeText: string, activeModel: string, activeBackend: string) => {
+			const params = { apiUrl, model: activeModel, backend: activeBackend };
+			try {
+				const raw = await validateEPD(params, safeText);
+				const validity = typeof raw === "string" ? JSON.parse(raw) : raw;
+				const { is_epd, category, epd_count, products } = validity;
+				setIsEpdValid(is_epd);
+				setStatus(is_epd ? "extracting" : "error");
+				addMsg({ role: "assistant", content: `${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
+				if (validity?.is_epd) {
+					addMsg({ role: "assistant", content: `Product Category: ${category}` });
+					addMsg({ role: "assistant", content: `Number of Products: ${epd_count}` });
+					const specs_data = identifySpecs(category);
+					await extractJSON(
+						{ ...params, ajv, openEPDSchema },
+						safeText,
+						specs_data,
+						{ setJsonOut, addMsg, setValidation },
+						{ count: Number(epd_count) || (products?.length ?? 1), names: products },
+					);
+				}
+				setStatus("done");
+			} catch (e: any) {
+				console.error(e.message);
+				addMsg({ role: "assistant", content: e.message });
+				setStatus("error");
+			}
+		},
+		[apiUrl, ajv, openEPDSchema, addMsg, setIsEpdValid, setJsonOut, setStatus, setValidation],
+	);
+
+	const onModelDialogRerun = useCallback(async () => {
+		if (!pendingModel) return;
+		setModelDialogOpen(false);
+		setModel(pendingModel.value);
+		setBackend(pendingModel.backend);
+		setPendingModel(null);
+		setMessages([{ role: "system", content: "Skipping markdown extraction, re-using from previous run." }]);
+		setValidation([]);
+		setJsonOut(null);
+		setIsEpdValid(null);
+		setStatus("extracting");
+		await runPipeline(lastSafeTextRef.current, pendingModel.value, pendingModel.backend);
+	}, [pendingModel, setMessages, setValidation, setJsonOut, setIsEpdValid, setStatus, runPipeline]);
+
+	const onModelDialogClear = useCallback(() => {
+		if (!pendingModel) return;
+		setModelDialogOpen(false);
+		setModel(pendingModel.value);
+		setBackend(pendingModel.backend);
+		setPendingModel(null);
+		setStatus("idle");
+		setUploadKey((k) => k + 1);
+		resetState();
+		setMessages([]);
+	}, [pendingModel, resetState, setMessages, setStatus]);
 
 	const extractMarkdown = async (f: File): Promise<string> => {
 		const ext = f.name.toLowerCase().split(".").pop();
@@ -68,8 +134,6 @@ const Sidebar = ({
 		if (ext === "html" || ext === "htm") return htmlToMarkdown(await f.text());
 		throw new Error("Please upload PDF or HTML.");
 	};
-
-	const llmParams = { apiUrl };
 
 	const onFileChange = useCallback(
 		async (files: File[]) => {
@@ -98,56 +162,18 @@ const Sidebar = ({
 					console.info("Injection report:", report);
 				}
 				setMarkdown(safeText);
+				lastSafeTextRef.current = safeText;
 
 				addMsg({ role: "system", content: "✅ EPD extracted & sanitized." });
 
-				const params = { apiUrl, model, backend };
-				const raw = await validateEPD(params, safeText);
-				const validity = typeof raw === "string" ? JSON.parse(raw) : raw;
-				const { is_epd, category, epd_count, products } = validity;
-
-				setIsEpdValid(is_epd);
-				setStatus(is_epd ? "extracting" : "error");
-
-				addMsg({ role: "assistant", content: `${validity ? "✅ Valid EPD" : "❌ Invalid EPD"}` });
-
-				if (validity?.is_epd) {
-					addMsg({ role: "assistant", content: `Product Category: ${category}` });
-					addMsg({ role: "assistant", content: `Number of Products: ${epd_count}` });
-					const specs_data = identifySpecs(category);
-					await extractJSON(
-						{ ...params, ajv, openEPDSchema },
-						safeText,
-						specs_data,
-						{
-							setJsonOut,
-							addMsg,
-							setValidation,
-						},
-						{ count: Number(epd_count) || (products?.length ?? 1), names: products },
-					);
-				}
-				setStatus("done");
+				await runPipeline(safeText, model, backend);
 			} catch (e: any) {
 				console.error(e.message);
 				addMsg({ role: "assistant", content: e.message });
 				setStatus("error");
 			}
 		},
-		[
-			setStatus,
-			setMarkdown,
-			setMessages,
-			setValidation,
-			setJsonOut,
-			addMsg,
-			setIsEpdValid,
-			llmParams,
-			ajv,
-			openEPDSchema,
-			model,
-			backend,
-		],
+		[setStatus, setMarkdown, setMessages, resetState, addMsg, runPipeline, model, backend],
 	);
 
 	const onStartOver = useCallback(() => {
@@ -254,6 +280,42 @@ const Sidebar = ({
 											Start Over
 										</Button>
 									</Dialog.ActionTrigger>
+								</Dialog.Footer>
+								<Dialog.CloseTrigger asChild>
+									<CloseButton size="sm" />
+								</Dialog.CloseTrigger>
+							</Dialog.Content>
+						</Dialog.Positioner>
+					</Portal>
+				</Dialog.Root>
+
+				<Dialog.Root
+					open={modelDialogOpen}
+					onOpenChange={(d) => {
+						if (!d.open) setModelDialogOpen(false);
+					}}
+					placement="center"
+					motionPreset="slide-in-bottom"
+					role="alertdialog"
+				>
+					<Portal>
+						<Dialog.Backdrop />
+						<Dialog.Positioner>
+							<Dialog.Content style={{ color: "teal", fontWeight: "600" }}>
+								<Dialog.Header>
+									<Dialog.Title>Switch Model</Dialog.Title>
+								</Dialog.Header>
+								<Dialog.Body>
+									You've changed the model. Would you like to rerun the extraction with the new model, or clear the
+									current results and start fresh?
+								</Dialog.Body>
+								<Dialog.Footer>
+									<Button variant="outline" style={{ color: "teal", fontWeight: "600" }} onClick={onModelDialogClear}>
+										Clear &amp; Switch
+									</Button>
+									<Button colorPalette="red" onClick={onModelDialogRerun}>
+										Rerun with New Model
+									</Button>
 								</Dialog.Footer>
 								<Dialog.CloseTrigger asChild>
 									<CloseButton size="sm" />
