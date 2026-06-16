@@ -90,6 +90,7 @@ const Sidebar = ({
 						{ ...params, ajv, openEPDSchema },
 						safeText,
 						specs_data,
+						//@ts-ignore
 						{ setJsonOut, addMsg, setValidation },
 						{ count: Number(epd_count) || (products?.length ?? 1), names: products },
 					);

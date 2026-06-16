@@ -28,8 +28,8 @@ import Sidebar from "./components/Sidebar";
 import { strToU8, zipSync } from "fflate";
 import { ChatMessage, Status, ValidationResult } from "./lib/types";
 
-import openEPDSchema from "../src/lib/openepd_validation_schema.json";
 import Disclaimer from "./components/Disclaimer";
+import openEPDSchema from "./lib/openepd_validation_schema.json";
 
 const modelLabels: Record<string, string> = {
 	"Llama-4-Maverick-17B-128E-Instruct-FP8": "Llama Maverick (r-chat)",
