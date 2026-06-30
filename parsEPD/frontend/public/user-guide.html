@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>parsEPD User Guide</title>
+		<link rel="stylesheet" href="/nist-header-footer/nist-combined.css" />
+		<script src="/nist-header-footer/nist-header-footer-v-2.0.js"></script>
+
+		<style>
+			@font-face {
+				font-family: "Roboto";
+				src: url("/font/Roboto/static/Roboto-Regular.ttf") format("truetype");
+				font-weight: 400;
+			}
+			@font-face {
+				font-family: "Roboto";
+				src: url("/font/Roboto/static/Roboto-Bold.ttf") format("truetype");
+				font-weight: 700;
+			}
+			@font-face {
+				font-family: "Roboto";
+				src: url("/font/Roboto/static/Roboto-SemiBold.ttf") format("truetype");
+				font-weight: 600;
+			}
+
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				font-family: "Roboto", sans-serif;
+				background: #000;
+				color: #e2e8f0;
+				line-height: 1.7;
+				font-size: 18px;
+			}
+
+			nav {
+				background: #000;
+				padding: 16px 40px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			nav a {
+				color: #008080;
+				text-decoration: none;
+				font-weight: 800;
+				font-size: 18px;
+			}
+
+			nav .nav-links {
+				display: flex;
+				gap: 32px;
+			}
+
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 48px 32px 80px;
+			}
+
+			.page-title {
+				font-size: 2.5rem;
+				font-weight: 700;
+				margin-bottom: 8px;
+				color: #008080;
+			}
+
+			.page-subtitle {
+				font-size: 1.1rem;
+				color: #94a3b8;
+				margin-bottom: 48px;
+			}
+
+			h2 {
+				font-size: 1.5rem;
+				font-weight: 700;
+				color: #008080;
+				margin-top: 48px;
+				margin-bottom: 16px;
+				padding-bottom: 8px;
+				border-bottom: 1px solid #2d3748;
+			}
+
+			h3 {
+				font-size: 1.1rem;
+				font-weight: 600;
+				color: #008080;
+				margin-top: 24px;
+				margin-bottom: 8px;
+			}
+
+			p {
+				margin-bottom: 12px;
+				color: #fafafa;
+			}
+
+			a {
+				color: #008080;
+				text-decoration: none;
+			}
+			a:hover {
+				text-decoration: underline;
+			}
+
+			ul,
+			ol {
+				margin: 12px 0 16px 24px;
+				color: #fafafa;
+			}
+
+			li {
+				margin-bottom: 6px;
+			}
+
+			.step-list {
+				list-style: none;
+				margin-left: 0;
+				counter-reset: steps;
+			}
+
+			.step-list li {
+				counter-increment: steps;
+				display: flex;
+				gap: 16px;
+				margin-bottom: 20px;
+				align-items: flex-start;
+			}
+
+			.step-list li::before {
+				content: counter(steps);
+				background: #008080;
+				color: #fff;
+				font-weight: 700;
+				font-size: 0.85rem;
+				min-width: 28px;
+				height: 28px;
+				border-radius: 50%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				margin-top: 2px;
+			}
+
+			.step-content {
+				flex: 1;
+			}
+			.step-title {
+				font-weight: 600;
+				color: #008080;
+				margin-bottom: 4px;
+			}
+			.step-desc {
+				color: #fafafa;
+				font-size: 0.95rem;
+			}
+
+			.card {
+				background: #1a202c;
+				border: 1px solid #2d3748;
+				border-radius: 8px;
+				padding: 20px 24px;
+				margin-bottom: 16px;
+			}
+
+			.card-title {
+				font-weight: 700;
+				color: #008080;
+				margin-bottom: 6px;
+			}
+
+			.card p {
+				margin-bottom: 0;
+				font-size: 0.95rem;
+			}
+
+			.tag {
+				display: inline-block;
+				background: #2d3748;
+				color: #90cdf4;
+				font-size: 0.8rem;
+				font-weight: 600;
+				padding: 2px 8px;
+				border-radius: 4px;
+				margin-right: 6px;
+				margin-bottom: 4px;
+			}
+
+			.callout {
+				background: #1a2a1a;
+				border-left: 4px solid #48bb78;
+				border-radius: 0 6px 6px 0;
+				padding: 14px 20px;
+				margin: 20px 0;
+				color: #c6f6d5;
+				font-size: 0.95rem;
+			}
+
+			.callout.warn {
+				background: #2a1a1a;
+				border-left-color: #fc8181;
+				color: #fed7d7;
+			}
+
+			.callout.info {
+				background: #1a1f2a;
+				border-left-color: #63b3ed;
+				color: #bee3f8;
+			}
+
+			code {
+				background: #2d3748;
+				color: #f6e05e;
+				font-family: "Courier New", monospace;
+				font-size: 0.88rem;
+				padding: 2px 6px;
+				border-radius: 4px;
+			}
+
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				margin: 16px 0;
+				font-size: 0.95rem;
+			}
+
+			th {
+				background: #2d3748;
+				color: #e2e8f0;
+				text-align: left;
+				padding: 10px 14px;
+				font-weight: 600;
+			}
+
+			td {
+				padding: 10px 14px;
+				border-bottom: 1px solid #2d3748;
+				color: #fafafa;
+				vertical-align: top;
+			}
+
+			tr:last-child td {
+				border-bottom: none;
+			}
+
+			.toc {
+				background: #1a202c;
+				border: 1px solid #2d3748;
+				border-radius: 8px;
+				padding: 20px 24px;
+				margin-bottom: 40px;
+			}
+
+			.toc-title {
+				font-weight: 700;
+				color: #e2e8f0;
+				margin-bottom: 12px;
+			}
+
+			.toc ol {
+				margin: 0 0 0 20px;
+			}
+
+			.toc li {
+				margin-bottom: 4px;
+			}
+
+			.toc a {
+				color: #008080;
+				font-size: 0.95rem;
+			}
+
+			.disclaimer {
+				font-size: 16px;
+				margin-top: 40px;
+				border-top: 1px solid #2d3748;
+				padding: 12px;
+				background-color: "#080808";
+				border: "1px solid #2e2e2e";
+				color: "white";
+			}
+		</style>
+	</head>
+	<body>
+		<nav>
+			<a href="/">← Back to parsEPD</a>
+			<div class="nav-links">
+				<a href="https://www.nist.gov/programs-projects/building-system-economics" target="_blank"
+					>Building System Economics</a
+				>
+				<a href="https://github.com/usnistgov/pdf-digitization/" target="_blank">GitHub ↗</a>
+			</div>
+		</nav>
+
+		<div class="container">
+			<h1 class="page-title"><img src="/logo.png" width="300px" /> User Guide</h1>
+			<p class="page-subtitle">Convert EPD documents to machine-readable openEPD JSON using AI</p>
+
+			<div class="toc">
+				<div class="toc-title">Contents</div>
+				<ol>
+					<li><a href="#overview">Overview</a></li>
+					<li><a href="#file-types">Supported File Types</a></li>
+					<li><a href="#model-selection">Model Selection</a></li>
+					<li><a href="#pipeline">How It Works</a></li>
+					<li><a href="#output">Output Format</a></li>
+					<li><a href="#results">Using the Results</a></li>
+					<li><a href="#troubleshooting">Troubleshooting</a></li>
+					<li><a href="#about">About</a></li>
+				</ol>
+			</div>
+
+			<!-- OVERVIEW -->
+			<h2 id="overview">Overview</h2>
+			<p>
+				parsEPD is a NIST tool that converts Environmental Product Declarations (EPDs) from PDF or HTML format into a
+				standardized, machine-readable JSON format called <strong>openEPD</strong>. The conversion is powered by a large
+				language model (LLM) that reads the document, validates it as a genuine EPD, and extracts structured data
+				conforming to the openEPD schema.
+			</p>
+			<p>
+				EPDs are formal documents that declare the environmental impact of construction products. They are essential for
+				calculating embodied carbon in buildings, but are typically published as PDFs that resist automated processing.
+				parsEPD eliminates the manual extraction step.
+			</p>
+
+			<div class="callout info">
+				parsEPD is designed for EPDs that comply with ISO 14025 and EN 15804. Documents that contain environmental data
+				but are not formal EPDs (LCA reports, sustainability brochures) will be rejected by the validation step.
+			</div>
+
+			<!-- FILE TYPES -->
+			<h2 id="file-types">Supported File Types</h2>
+
+			<table>
+				<tr>
+					<th>Format</th>
+					<th>Extensions</th>
+					<th>Notes</th>
+				</tr>
+				<tr>
+					<td>PDF</td>
+					<td><code>.pdf</code></td>
+					<td>
+						Text is extracted using pdfjs. Scanned/image-only PDFs are not supported — the text must be selectable.
+					</td>
+				</tr>
+				<tr>
+					<td>HTML</td>
+					<td><code>.htm</code>, <code>.html</code></td>
+					<td>Full HTML files only. Single-page EPD web exports work well.</td>
+				</tr>
+			</table>
+
+			<ul>
+				<li>Maximum file size: <strong>5 MB</strong></li>
+				<li>Only one file at a time — uploading a new file replaces the previous one</li>
+				<li>Only the most recent upload is available for conversion</li>
+			</ul>
+
+			<div class="callout warn">
+				Scanned PDFs (images of text) cannot be processed. The PDF must contain selectable text. If you can highlight
+				text in a PDF viewer, parsEPD can read it.
+			</div>
+
+			<!-- MODEL SELECTION -->
+			<h2 id="model-selection">Model Selection</h2>
+			<p>
+				parsEPD routes LLM requests through an internal NIST proxy. Select a model from the dropdown in the sidebar
+				before uploading your file. The model choice affects output quality, speed, and handling of complex
+				multi-product EPDs.
+			</p>
+
+			<div class="card">
+				<div class="card-title">
+					Llama 4 Maverick 17B <span class="tag">Default</span><span class="tag">Recommended</span>
+				</div>
+				<p>
+					A strong general-purpose model. Good balance of speed and accuracy for most standard EPDs. Use this as the
+					starting point.
+				</p>
+			</div>
+
+			<div class="card">
+				<div class="card-title">GPT OSS 120B</div>
+				<p>
+					Larger model with higher capacity. Better for complex EPDs with many products, dense tables, or unusual
+					formatting. Slower than Maverick.
+				</p>
+			</div>
+
+			<div class="card">
+				<div class="card-title">Nemotron Super 120B</div>
+				<p>
+					NVIDIA's large open-source model. An alternative to GPT OSS for difficult documents. Try this if GPT OSS
+					produces incomplete or malformed output.
+				</p>
+			</div>
+
+			<div class="callout">
+				If extraction fails or produces clearly wrong values, try a larger model (GPT OSS or Nemotron) before concluding
+				the EPD is unsupported.
+			</div>
+
+			<!-- PIPELINE -->
+			<h2 id="pipeline">How It Works</h2>
+			<p>After uploading, parsEPD runs a sequential 7-step pipeline. Status is shown in the sidebar.</p>
+
+			<ol class="step-list">
+				<li>
+					<div class="step-content">
+						<div class="step-title">Text Extraction</div>
+						<div class="step-desc">
+							For PDFs, pdfjs reads each page and concatenates all text. For HTML files, the markup is converted to
+							plain text. The extracted content is then passed to subsequent steps.
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="step-content">
+						<div class="step-title">Security Sanitization</div>
+						<div class="step-desc">
+							The extracted text is scanned for prompt injection patterns — instructions embedded in the document that
+							could manipulate the LLM. Detected lines are redacted before any LLM call is made.
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="step-content">
+						<div class="step-title">EPD Validation</div>
+						<div class="step-desc">
+							The LLM checks whether the document is a genuine EPD per the definition in ISO 14025 and EN 15804. It must
+							have: a program operator, verification statement, declared unit, LCIA indicators, and a validity period.
+							Documents that fail this check are rejected with a "Not an EPD" message and processing stops.
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="step-content">
+						<div class="step-title">Product Category Identification</div>
+						<div class="step-desc">
+							The LLM classifies the EPD into a product category (e.g., Ready Mix Concrete, Asphalt, Cement, Gypsum).
+							The category determines which category-specific schema extensions are included in the output JSON.
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="step-content">
+						<div class="step-title">Product Count Detection</div>
+						<div class="step-desc">
+							The LLM determines how many products are declared in the EPD. Some EPDs cover multiple products (e.g., a
+							concrete EPD declaring multiple mix designs). Multi-product EPDs produce an array of JSON objects.
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="step-content">
+						<div class="step-title">JSON Extraction</div>
+						<div class="step-desc">
+							The LLM extracts all structured data from the EPD and generates a complete openEPD JSON object. This is
+							the most LLM-intensive step and may take 30–90 seconds depending on document length and model selection.
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="step-content">
+						<div class="step-title">Schema Validation</div>
+						<div class="step-desc">
+							The extracted JSON is validated against the openEPD JSON schema using AJV. Validation results (pass or
+							list of errors) are shown below the JSON viewer. Schema errors do not prevent download — they indicate
+							fields that may need manual correction.
+						</div>
+					</div>
+				</li>
+			</ol>
+
+			<!-- OUTPUT FORMAT -->
+			<h2 id="output">Output Format</h2>
+			<p>
+				parsEPD outputs JSON conforming to the <strong>openEPD</strong> standard — an open schema for machine-readable
+				EPD data maintained by Building Transparency. This format is accepted by tools like EC3 (Embodied Carbon in
+				Construction Calculator).
+			</p>
+
+			<h3>Top-Level Fields</h3>
+			<table>
+				<tr>
+					<th>Field</th>
+					<th>Description</th>
+				</tr>
+				<tr>
+					<td><code>doctype</code></td>
+					<td>Always <code>"OpenEPD"</code></td>
+				</tr>
+				<tr>
+					<td><code>product_name</code></td>
+					<td>Name of the declared product</td>
+				</tr>
+				<tr>
+					<td><code>manufacturer</code></td>
+					<td>Company that produced the product, including location</td>
+				</tr>
+				<tr>
+					<td><code>plants</code></td>
+					<td>Manufacturing plant(s) where the product was made</td>
+				</tr>
+				<tr>
+					<td><code>declared_unit</code></td>
+					<td>Quantity and unit the environmental impacts are declared per (e.g., 1 m³)</td>
+				</tr>
+				<tr>
+					<td><code>pcr</code></td>
+					<td>Product Category Rule the EPD was developed under</td>
+				</tr>
+				<tr>
+					<td><code>program_operator</code></td>
+					<td>Organization that administers the EPD program</td>
+				</tr>
+				<tr>
+					<td><code>date_of_issue</code> / <code>valid_until</code></td>
+					<td>EPD validity period</td>
+				</tr>
+			</table>
+
+			<h3>Environmental Impacts (<code>impacts.TRACI 2.1</code>)</h3>
+			<p>Impacts are reported by life cycle stage (A1, A2, A3, A1A2A3) where available:</p>
+			<table>
+				<tr>
+					<th>Key</th>
+					<th>Impact Category</th>
+				</tr>
+				<tr>
+					<td><code>gwp</code></td>
+					<td>Global Warming Potential (kg CO₂ eq)</td>
+				</tr>
+				<tr>
+					<td><code>odp</code></td>
+					<td>Ozone Depletion Potential (kg CFC-11 eq)</td>
+				</tr>
+				<tr>
+					<td><code>ap</code></td>
+					<td>Acidification Potential (kg SO₂ eq)</td>
+				</tr>
+				<tr>
+					<td><code>ep</code></td>
+					<td>Eutrophication Potential (kg N eq)</td>
+				</tr>
+				<tr>
+					<td><code>pocp</code></td>
+					<td>Photochemical Ozone Creation Potential</td>
+				</tr>
+				<tr>
+					<td><code>gwp_biogenic</code></td>
+					<td>Biogenic GWP</td>
+				</tr>
+				<tr>
+					<td><code>gwp_luluc</code></td>
+					<td>Land use and land use change GWP</td>
+				</tr>
+			</table>
+
+			<h3>Category-Specific Extensions (<code>specs</code>)</h3>
+			<p>For recognized product categories, additional fields are extracted:</p>
+			<ul>
+				<li>
+					<strong>Asphalt</strong> — binder grade, mix type (WMA/HMA), RAP/RAS content, aggregate size, temperature
+				</li>
+				<li>
+					<strong>Cement</strong> — cementitious composition (OPC, fly ash, GGBS, silica fume, etc.), ASTM/EN type
+				</li>
+				<li>
+					<strong>Ready Mix Concrete</strong> — strength, slump, w/c ratio, exposure classes, cementitious composition,
+					application type
+				</li>
+			</ul>
+
+			<!-- USING RESULTS -->
+			<h2 id="results">Using the Results</h2>
+
+			<h3>Viewing the JSON</h3>
+			<p>
+				The extracted JSON is displayed in an interactive editor on the right side of the screen. You can expand and
+				collapse nested objects, and edit individual values directly in the viewer.
+			</p>
+
+			<h3>Downloading</h3>
+			<p>
+				Click the <strong>Download</strong> button below the JSON viewer to save the file as <code>.json</code>. The
+				filename defaults to the product name extracted from the EPD.
+			</p>
+
+			<h3>Starting Over</h3>
+			<p>
+				Click <strong>Start Over</strong> in the sidebar to clear all state and upload a new EPD. This action cannot be
+				undone — a confirmation dialog will appear before clearing.
+			</p>
+
+			<div class="callout info">
+				The JSON editor allows manual corrections. If the LLM extracted a wrong value, you can fix it before
+				downloading. Schema validation errors shown below the viewer identify specific fields that need attention.
+			</div>
+
+			<!-- TROUBLESHOOTING -->
+			<h2 id="troubleshooting">Troubleshooting</h2>
+
+			<h3>"Not an EPD" error</h3>
+			<p>The validation step determined the document does not meet EPD requirements. Possible causes:</p>
+			<ul>
+				<li>The document is an LCA report, sustainability assessment, or product brochure — not a formal EPD</li>
+				<li>The EPD is a scanned image and text extraction returned garbled content</li>
+				<li>The document is partially loaded (try a fresh download of the PDF)</li>
+			</ul>
+
+			<h3>Incomplete or missing fields in output</h3>
+			<p>If some fields are <code>null</code> or <code>"--"</code>:</p>
+			<ul>
+				<li>The EPD may genuinely not report those values (common for older EPDs)</li>
+				<li>The data may be in a table format the model missed — try a larger model (GPT OSS or Nemotron)</li>
+				<li>Very long EPDs may exceed the model's context window — consider a model with higher capacity</li>
+			</ul>
+
+			<h3>Schema validation errors</h3>
+			<p>Validation errors appear below the JSON viewer after extraction. Common issues:</p>
+			<ul>
+				<li>Wrong data type for a field (e.g., a string where a number is expected) — correct in the JSON editor</li>
+				<li>Missing required fields — check if the EPD actually contains the data and add it manually if so</li>
+				<li>Units formatted differently than schema expects — normalize to the schema's expected unit string</li>
+			</ul>
+
+			<h3>Slow extraction or timeout</h3>
+			<ul>
+				<li>Large PDFs (50+ pages) take longer — expect 60–120 seconds for complex documents</li>
+				<li>If the page seems unresponsive, wait up to 3 minutes before refreshing</li>
+				<li>Multi-product EPDs are more demanding — use GPT OSS or Nemotron for documents with 3+ products</li>
+			</ul>
+
+			<h3>Uploaded file not accepted</h3>
+			<ul>
+				<li>File must be <code>.pdf</code>, <code>.htm</code>, or <code>.html</code></li>
+				<li>File size limit is 5 MB</li>
+				<li>Only one file at a time is supported</li>
+			</ul>
+
+			<!-- ABOUT -->
+			<h2 id="about">About</h2>
+			<p>
+				parsEPD is developed by the <strong>National Institute of Standards and Technology (NIST)</strong> as part of
+				the
+				<a href="https://www.nist.gov/programs-projects/building-system-economics" target="_blank"
+					>Building System Economics project</a
+				>. The goal is to make EPD data machine-accessible at scale, enabling automated embodied carbon calculations for
+				buildings.
+			</p>
+			<p>
+				The openEPD schema is maintained by
+				<a href="https://www.buildingtransparency.org/" target="_blank">Building Transparency</a>. parsEPD is open
+				source — source code is available on
+				<a href="https://github.com/usnistgov/pdf-digitization/" target="_blank">GitHub</a>.
+			</p>
+			<p>
+				This software was developed by employees of NIST, an agency of the Federal Government, and is being made
+				available as a public service. Pursuant to 17 U.S.C. 105, works of NIST employees are not subject to copyright
+				protection in the United States.
+			</p>
+		</div>
+		<div class="disclaimer">
+			This software was developed at the National Institute of Standards and Technology by employees of the Federal
+			Government in the course of their official duties. Pursuant to title 17 Section 105 of the United States Code this
+			software is not subject to copyright protection and is in the public domain. It is an experimental system. NIST
+			assumes no responsibility whatsoever for its use by other parties, and makes no guarantees, expressed or implied,
+			about its quality, reliability, or any other characteristic. We would appreciate acknowledgement if the software
+			is used. This software can be redistributed and/or modified freely provided that any derivative works bear some
+			notice that they are derived from it, and any modified versions bear some notice that they have been modified.
+		</div>
+	</body>
+</html>

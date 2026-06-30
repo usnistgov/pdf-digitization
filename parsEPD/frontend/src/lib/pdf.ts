@@ -15,8 +15,7 @@ export async function pdfToMarkdown(arrayBuffer: ArrayBuffer): Promise<string> {
 		const strings = content.items.map((it: any) => (typeof it.str === "string" ? it.str : "")).join(" ");
 		text += strings + "\n\n";
 	}
-	const td = new TurndownService({ headingStyle: "atx" });
-	return td.turndown(text);
+	return text;
 }
 
 export function htmlToMarkdown(html: string): string {
