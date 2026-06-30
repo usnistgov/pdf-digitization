@@ -3,6 +3,8 @@ import Ajv from "ajv";
 
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
+export type ValidationResult = { valid: boolean; errors: string[] };
+
 export type SidebarProps = {
 	// LLM config
 	apiUrl: string;
@@ -12,12 +14,16 @@ export type SidebarProps = {
 	setStatus: (s: Status) => void;
 	setMarkdown: (s: string) => void;
 	setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
-	setValidation: (s: string) => void;
+	setValidation: (v: ValidationResult[]) => void;
 	setJsonOut: (v: any) => void;
 	addMsg: (m: ChatMessage) => void;
 	setIsEpdValid: (e: any) => void;
 	downloadJSON: () => void;
 	jsonOut: any;
+	model: string;
+	setModel: (m: string) => void;
+	backend: string;
+	setBackend: (b: string) => void;
 
 	// Schema / validator
 	ajv: Ajv;

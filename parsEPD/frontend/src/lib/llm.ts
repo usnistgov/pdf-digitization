@@ -9,10 +9,8 @@ export async function chatCompletion(opts: {
 	max_tokens?: number;
 	top_p: number;
 	backend?: string;
-	projectId?: string;
-	location?: string;
-	// Backend proxy configuration
 	backendUrl?: string;
+	response_format?: { type: string; json_schema?: any };
 }) {
 	const {
 		apiUrl,
@@ -23,9 +21,8 @@ export async function chatCompletion(opts: {
 		max_tokens = 16384,
 		top_p = 1,
 		backend = "generic",
-		projectId,
-		location,
 		backendUrl,
+		response_format,
 	} = opts;
 
 	const baseUrl = backendUrl || apiUrl;
@@ -46,13 +43,9 @@ export async function chatCompletion(opts: {
 			temperature,
 			max_tokens,
 			top_p,
-			// Pass through backend config if needed for Vertex AI
-			...(backend === "vertex" && {
-				apiUrl,
-				apiKey,
-				projectId,
-				location,
-			}),
+			backend,
+			stream: true,
+			...(response_format && { response_format }),
 		}),
 	});
 
@@ -60,6 +53,31 @@ export async function chatCompletion(opts: {
 		const text = await res.text();
 		throw new Error(`LLM proxy error ${res.status}: ${text}`);
 	}
-	const json = await res.json();
-	return json?.choices?.[0]?.message?.content ?? "";
+
+	const reader = res.body!.getReader();
+	const decoder = new TextDecoder();
+	let content = "";
+	let buf = "";
+
+	while (true) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		buf += decoder.decode(value, { stream: true });
+
+		const lines = buf.split("\n");
+		buf = lines.pop()!;
+
+		for (const line of lines) {
+			if (!line.startsWith("data:")) continue;
+			const data = line.slice(5).trim();
+			if (data === "[DONE]") continue;
+			try {
+				const parsed = JSON.parse(data);
+				const delta = parsed.choices?.[0]?.delta?.content;
+				if (delta) content += delta;
+			} catch {}
+		}
+	}
+
+	return content;
 }

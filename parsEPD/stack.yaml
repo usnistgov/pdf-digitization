@@ -1,0 +1,34 @@
+version: "3.9"
+services:
+  server:
+    image: docker.abcd.co:4567/john.doe/pdf-digitization:latest
+    hostname: pdf-digitization
+    networks:
+      - traefik_net
+    environment:
+      # rchat backend
+      - VITE_LLM_URL=${VITE_LLM_URL}
+      - VITE_RCHAT_API_KEY=${VITE_RCHAT_API_KEY}
+      # Vertex AI
+      - VITE_VERTEX_PROJECT_ID=${VITE_VERTEX_PROJECT_ID}
+      - VITE_VERTEX_LOCATION=${VITE_VERTEX_LOCATION}
+      - VITE_VERTEX_CLAUDE_LOCATION=${VITE_VERTEX_CLAUDE_LOCATION}
+      # gcloud ADC as base64-encoded JSON
+      - GOOGLE_CREDENTIALS_B64=${GOOGLE_CREDENTIALS_B64}
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik_net"
+        - "traefik.http.routers.frontend_router_http.rule=Host(`abc.test.co`)"
+        - "traefik.http.routers.frontend_router_http.entrypoints=web"
+        - "traefik.http.middlewares.https_redirect.redirectscheme.scheme=https"
+        - "traefik.http.routers.frontend_router_http.middlewares=https_redirect"
+        - "traefik.http.routers.frontend_router_https.rule=Host(`abc.test.co`)"
+        - "traefik.http.routers.frontend_router_https.entrypoints=websecure"
+        - "traefik.http.routers.frontend_router_https.tls=true"
+        - "traefik.http.services.frontend_service.loadbalancer.server.port=8080"
+
+networks:
+  traefik_net:
+    external: true

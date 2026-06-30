@@ -1,0 +1,13 @@
+services:
+  app:
+    image: docker.abcd.co:4567/purav.dipeshkumarparekh/pdf-digitization:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend/.env:/app/backend/.env:ro
+      - ${APPDATA}/gcloud:/root/.config/gcloud:ro
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json

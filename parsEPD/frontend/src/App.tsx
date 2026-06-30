@@ -7,6 +7,7 @@ import {
 	Container,
 	Flex,
 	HStack,
+	List,
 	ScrollArea,
 	Spinner,
 	Tabs,
@@ -23,11 +24,21 @@ import "../public/nist-header-footer/nist-header-footer-v-2.0.js";
 import Header from "./components/Header";
 import Nav from "./components/Navigation";
 import Sidebar from "./components/Sidebar";
+import { Toaster } from "./components/ui/toaster";
 
-import { ChatMessage, Status } from "./lib/types";
+import { strToU8, zipSync } from "fflate";
+import { ChatMessage, Status, ValidationResult } from "./lib/types";
 
-import openEPDSchema from "../src/lib/openepd_validation_schema.json";
 import Disclaimer from "./components/Disclaimer";
+import openEPDSchema from "./lib/openepd_validation_schema.json";
+
+const modelLabels: Record<string, string> = {
+	"Llama-4-Maverick-17B-128E-Instruct-FP8": "Llama Maverick (r-chat)",
+	"gpt-oss-120b": "GPT OSS (r-chat)",
+	"NVIDIA-Nemotron-3-Super-120B-A12B-FP8": "Nemotron (r-chat)",
+	"google/gemini-2.5-flash": "Gemini 2.5 Flash (Vertex)",
+	"anthropic/claude-opus-4-6": "Claude Opus 4.6 (Vertex)",
+};
 
 const status_text = {
 	extracting: "Extracting text from EPD...",
@@ -49,7 +60,9 @@ export default function App() {
 	const [markdown, setMarkdown] = useState<string>("");
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [jsonOut, setJsonOut] = useState<any>(null);
-	const [validation, setValidation] = useState<string>("");
+	const [validation, setValidation] = useState<ValidationResult[]>([]);
+	const [model, setModel] = useState<string>("Llama-4-Maverick-17B-128E-Instruct-FP8");
+	const [backend, setBackend] = useState<string>("rchat");
 
 	useEffect(() => {
 		localStorage.setItem("pars_api_url", apiUrl);
@@ -67,17 +80,37 @@ export default function App() {
 
 	const downloadJSON = () => {
 		if (!jsonOut) return;
-		const blob = new Blob([JSON.stringify(jsonOut, null, 2)], { type: "application/json" });
-		const url = URL.createObjectURL(blob);
+		const arr = Array.isArray(jsonOut) ? jsonOut : [jsonOut];
 		const a = document.createElement("a");
-		a.href = url;
-		a.download = "openepd.json";
+		if (arr.length === 1) {
+			const product = arr[0];
+			const name = product?.name ?? product?.product_name ?? "product_1";
+			const safe = String(name)
+				.replace(/[^a-zA-Z0-9_\-]/g, "_")
+				.slice(0, 80);
+			const blob = new Blob([JSON.stringify(product, null, 2)], { type: "application/json" });
+			a.href = URL.createObjectURL(blob);
+			a.download = `${safe}_parsEPD.json`;
+		} else {
+			const files: Record<string, Uint8Array> = {};
+			arr.forEach((product: any, i: number) => {
+				const name = product?.name ?? product?.product_name ?? `product_${i + 1}`;
+				const safe = String(name)
+					.replace(/[^a-zA-Z0-9_\-]/g, "_")
+					.slice(0, 80);
+				files[`${safe}.json`] = strToU8(JSON.stringify(product, null, 2));
+			});
+			const blob = new Blob([zipSync(files)], { type: "application/zip" });
+			a.href = URL.createObjectURL(blob);
+			a.download = "parsEPD.zip";
+		}
 		a.click();
-		URL.revokeObjectURL(url);
+		URL.revokeObjectURL(a.href);
 	};
 
 	return (
 		<Theme appearance="dark">
+			<Toaster />
 			<Container maxW={"container.xl"} fluid p={0}>
 				<Nav />
 				<Flex>
@@ -96,6 +129,10 @@ export default function App() {
 						setIsEpdValid={setIsEpdValid}
 						jsonOut={jsonOut}
 						downloadJSON={downloadJSON}
+						model={model}
+						setModel={setModel}
+						backend={backend}
+						setBackend={setBackend}
 					/>
 					<Container style={{ padding: "50px 150px", minHeight: "75vh", maxHeight: "75vh", overflowY: "auto" }}>
 						<Header />
@@ -157,9 +194,13 @@ export default function App() {
 										Messages
 									</Text>
 									{jsonOut && (
-										<Flex justifyContent="flex-end" flexGrow={1}>
+										<Flex justifyContent="flex-end" flexGrow={1} alignItems="center" gap={3}>
+											<Text fontSize={"sm"} color={"teal"} fontWeight={"semibold"}>
+												Model: {modelLabels[model] ?? model}
+											</Text>
 											<Button color="teal" variant="solid" onClick={downloadJSON} disabled={!jsonOut}>
-												<LuArrowDownToLine /> Download JSON
+												<LuArrowDownToLine />
+												{Array.isArray(jsonOut) && jsonOut.length > 1 ? "Download ZIP" : "Download JSON"}
 											</Button>
 										</Flex>
 									)}
@@ -193,37 +234,50 @@ export default function App() {
 						)}
 
 						{jsonOut && Array.isArray(jsonOut) && (
-							<Tabs.Root mt={5}>
+							<Tabs.Root mt={5} defaultValue={"0"} lazyMount>
 								<Tabs.List>
-									{jsonOut.map((_, index) => (
+									{jsonOut.map((item, index) => (
 										<Tabs.Trigger key={index} value={index.toString()}>
-											Item {index + 1}
+											{item?.product_name && item.product_name !== "--" ? item.product_name : `Product ${index + 1}`}
 										</Tabs.Trigger>
 									))}
 								</Tabs.List>
-								{jsonOut.map((item, index) => (
-									<Tabs.Content key={index} value={index.toString()}>
-										<JsonEditor
-											data={item}
-											restrictEdit={true}
-											restrictDelete={true}
-											restrictAdd={true}
-											viewOnly={true}
-											collapse={1}
-											rootName="openEPD"
-											theme={githubDarkTheme}
-											maxWidth={"100%"}
-											defaultValue={1}
-										/>
-									</Tabs.Content>
-								))}
+								{jsonOut.map((item, index: number) => {
+									const vr = validation[index];
+									return (
+										<Tabs.Content key={index} value={index.toString()}>
+											<JsonEditor
+												data={item}
+												restrictEdit={true}
+												restrictDelete={true}
+												restrictAdd={true}
+												viewOnly={true}
+												collapse={1}
+												rootName="openEPD"
+												theme={githubDarkTheme}
+												maxWidth={"100%"}
+											/>
+											{vr && (
+												<Container
+													border={"1px"}
+													borderColor={vr.valid ? "green.600" : "yellow.600"}
+													borderRadius={10}
+													mt={3}
+													mb={3}
+													p={3}
+												>
+													<Text fontWeight={"bold"} color={vr.valid ? "green.400" : "yellow.400"}>
+														{vr.valid ? "✅ Schema valid" : "⚠️ Schema validation warnings"}
+													</Text>
+													<List.Root>
+														{!vr.valid && vr.errors.map((e, i) => <List.Item key={i}>{e}</List.Item>)}
+													</List.Root>
+												</Container>
+											)}
+										</Tabs.Content>
+									);
+								})}
 							</Tabs.Root>
-						)}
-
-						{validation && (
-							<Container border={"1px"} borderColor={"gray.200"} borderRadius={10} mt={5}>
-								<strong>{validation}</strong>
-							</Container>
 						)}
 					</Container>
 				</Flex>
