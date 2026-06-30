@@ -18,14 +18,16 @@ import { extractJSON, identifySpecs, validateEPD } from "../lib/functions";
 import { guardDocumentForLLM } from "../lib/guards";
 import { htmlToMarkdown, pdfToMarkdown } from "../lib/pdf";
 import { SidebarProps } from "../lib/types";
+import { toaster } from "./ui/toaster";
 
 const models = createListCollection({
 	items: [
 		{ label: "Llama Maverick (r-chat)", value: "Llama-4-Maverick-17B-128E-Instruct-FP8", backend: "rchat" },
 		{ label: "GPT OSS (r-chat)", value: "gpt-oss-120b", backend: "rchat" },
 		{ label: "Nemotron (r-chat)", value: "NVIDIA-Nemotron-3-Super-120B-A12B-FP8", backend: "rchat" },
+		{ label: "Gemma 4 (r-chat)", value: "gemma-4-31B-it", backend: "rchat" },
 		{ label: "Gemini 2.5 Flash (Vertex)", value: "google/gemini-2.5-flash", backend: "vertex" },
-		{ label: "Claude Opus 4.6 (Vertex)", value: "anthropic/claude-opus-4-6", backend: "vertex" },
+		// { label: "Claude Opus 4.6 (Vertex)", value: "anthropic/claude-opus-4-6", backend: "vertex" },
 	],
 });
 
@@ -239,6 +241,19 @@ const Sidebar = ({
 				maxFiles={1}
 				maxFileSize={5 * 1024 * 1024} // 5MB
 				onFileChange={(uploads) => {
+					if (uploads.rejectedFiles?.length) {
+						const reason = uploads.rejectedFiles[0]?.errors?.[0];
+						toaster.create({
+							title: "Upload rejected",
+							description: reason === "FILE_TOO_LARGE" ? "File too large (max 5 MB)." : reason,
+							type: "error",
+							duration: 5000,
+						});
+						resetState();
+						setStatus("idle");
+						setUploadKey((k) => k + 1);
+						return;
+					}
 					const files = uploads.acceptedFiles;
 					const list = Array?.isArray(files) ? files : Array?.from(files ?? []);
 					if (!list.length) return;

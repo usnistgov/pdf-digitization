@@ -24,6 +24,7 @@ import "../public/nist-header-footer/nist-header-footer-v-2.0.js";
 import Header from "./components/Header";
 import Nav from "./components/Navigation";
 import Sidebar from "./components/Sidebar";
+import { Toaster } from "./components/ui/toaster";
 
 import { strToU8, zipSync } from "fflate";
 import { ChatMessage, Status, ValidationResult } from "./lib/types";
@@ -109,6 +110,7 @@ export default function App() {
 
 	return (
 		<Theme appearance="dark">
+			<Toaster />
 			<Container maxW={"container.xl"} fluid p={0}>
 				<Nav />
 				<Flex>
